@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="OneOf" Version="3.0.263" />
+    <PackageReference Include="YamlDotNet" Version="13.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureDevopsExplorer.AzureDevopsApi\AzureDevopsExplorer.AzureDevopsApi.csproj" />
+    <ProjectReference Include="..\AzureDevopsExplorer.Database\AzureDevopsExplorer.Database.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

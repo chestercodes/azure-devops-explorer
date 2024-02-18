@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AzureDevopsExplorer.Console": {
+      "commandName": "Project",
+      "commandLineArgs": "--org xxxx --project-names xxxx --data-actions builds-add-latest-default all-build-and-pipeline "
+    }
+  }
+}
