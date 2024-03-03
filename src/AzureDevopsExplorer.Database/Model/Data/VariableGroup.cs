@@ -7,7 +7,7 @@ public class VariableGroup
     public DateTime? LastImport { get; set; }
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
-    public List<Variable> Variables { get; set; } = new();
+    public List<VariableGroupVariable> Variables { get; set; } = new();
     public string? Type { get; set; }
     public string? Name { get; set; }
     public string? Description { get; set; }

@@ -14,7 +14,7 @@ public class CliCommand
             name: "--org",
             description: "Azure Devops organisation name")
         {
-            IsRequired = true,
+            IsRequired = false,
         };
 
         var projectNamesOption = new Option<string[]>(
@@ -41,17 +41,25 @@ public class CliCommand
             AllowMultipleArgumentsPerToken = true
         };
 
+        var loadToNeo4jOption = new Option<bool>(
+            name: "--load-to-neo4j",
+            description: "Load entities to neo4j")
+        {
+            IsRequired = false
+        };
+
         var rootCommand = new RootCommand("Azure devops explorer app");
         rootCommand.AddOption(organisationNameOption);
         rootCommand.AddOption(projectNamesOption);
         rootCommand.AddOption(dataActionsOption);
         rootCommand.AddOption(pipelineIdsOption);
+        rootCommand.AddOption(loadToNeo4jOption);
 
-        rootCommand.SetHandler(CommandHandler, organisationNameOption, projectNamesOption, dataActionsOption, pipelineIdsOption);
+        rootCommand.SetHandler(CommandHandler, organisationNameOption, projectNamesOption, dataActionsOption, pipelineIdsOption, loadToNeo4jOption);
         return rootCommand;
     }
 
-    private async Task CommandHandler(string organisationName, string[] projectNames, string[] dataActions, int[] pipelineIds)
+    private async Task CommandHandler(string organisationName, string[] projectNames, string[] dataActions, int[] pipelineIds, bool loadToNeo4J)
     {
         var configParser = new ApplicationConfigParser();
         var config = configParser.Parse(dataActions, pipelineIds);
@@ -83,6 +91,15 @@ public class CliCommand
                 var runImport = new RunImport(httpClient, connection, projName);
                 await runImport.Run(config.DataConfig);
             }
+        }
+
+        var latestPipelineAndRun = new LatestPipelineAndRun();
+        await latestPipelineAndRun.Run();
+
+        if (loadToNeo4J)
+        {
+            var loadLatest = new LoadLatest();
+            await loadLatest.Run();
         }
     }
 

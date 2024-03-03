@@ -18,6 +18,8 @@ the following are currently retrieved:
 - git pull request reviewers
 - pipeline
 - pipeline runs - with repository and pipeline artifacts used
+- pipeline checks
+- pipeline environments
 - service endpoints
 - service endpoints execution history
 - variable groups
@@ -45,3 +47,9 @@ dotnet ef database update
 once that is done can run by changing the values in the AzureDevopsExplorer.Console/Properties/localSettings.json file.
 
 the actions can be seen in the AzureDevopsExplorer.Application/Configuration/DataAction.cs file
+
+## Neo4j
+
+The data can be loaded into a docker container of neo4j. To spin this up, run docker compose in the root of the project.
+
+To make it load the latest entity values to neo4j use the `--load-to-neo4j` flag.

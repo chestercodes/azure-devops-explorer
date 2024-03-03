@@ -1,4 +1,5 @@
 ﻿using Flurl.Http;
+using System.Text.Json;
 
 namespace AzureDevopsExplorer.AzureDevopsApi.Client;
 
@@ -31,6 +32,38 @@ public class AzureDevopsApiProjectClient
             var url = $"{Info.ApiUrl}/{path}";
             var req = client.Request(url);
             var data = await req.GetJsonAsync<TJson>();
+            return data;
+        }
+        catch (FlurlHttpException ex)
+        {
+            try
+            {
+                var err = await ex.GetResponseJsonAsync<ErrorResponse>();
+                return AzureDevopsApiError.FromError(err, ex);
+            }
+            catch (Exception unEx)
+            {
+                var thing = await ex.Call.Response.GetStringAsync();
+                return AzureDevopsApiError.FromEx(unEx);
+            }
+        }
+    }
+
+    public async Task<AzureDevopsApiResult<TJson>> PostJson<TJson>(string path, object body)
+    {
+        try
+        {
+            var client = GetClient();
+            var url = $"{Info.ApiUrl}/{path}";
+            var req = client.Request(url);
+            req.WithHeader("Content-Type", "application/json");
+
+            //var data = await req.PostJsonAsync<TJson>(body);
+
+            var bodyJson = JsonSerializer.Serialize(body);
+            var resp = await req.PostStringAsync(bodyJson);
+            var data = await resp.GetJsonAsync<TJson>();
+
             return data;
         }
         catch (FlurlHttpException ex)

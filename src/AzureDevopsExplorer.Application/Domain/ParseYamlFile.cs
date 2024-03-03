@@ -177,10 +177,24 @@ public class ParseYamlFile
                 specificVariables.Add(new SpecificVariableUsage(key, value, varNameKey));
             }
 
+            var pipelineEnvironments = new List<PipelineEnvironmentUsage>();
+
+            foreach (var kvp in dictionary)
+            {
+                var k = kvp.Key;
+                var v = kvp.Value;
+                var isEnvironmentName = k.EndsWith("environment.name");
+                if (isEnvironmentName)
+                {
+                    pipelineEnvironments.Add(new PipelineEnvironmentUsage(v, k));
+                }
+            }
+
             return new ParsedYamlFile(
                 specificVariables,
                 variableGroups,
-                serviceConnections);
+                serviceConnections,
+                pipelineEnvironments);
         }
         catch (Exception e)
         {
@@ -240,7 +254,13 @@ public record TemplateSchedulesParseResult(
 public record ParsedYamlFile(
     List<SpecificVariableUsage> SpecificVariables,
     List<VariableGroupUsage> VariableGroups,
-    List<ServiceConnectionUsage> ServiceConnections
+    List<ServiceConnectionUsage> ServiceConnections,
+    List<PipelineEnvironmentUsage> PipelineEnvironments
+    );
+
+public record PipelineEnvironmentUsage(
+    string Name,
+    string Location
     );
 
 public record SpecificVariableUsage(

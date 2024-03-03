@@ -37,7 +37,7 @@ public static class BuildContextAddBuildExtensions
         }
         db.AddReferenceLinks(build.Links, build.Project.Id, ReferenceLinkSourceType.Build, build.Id.ToString());
 
-        Guid? parseNullableGuid (string v)
+        Guid? parseNullableGuid(string v)
         {
             if (string.IsNullOrWhiteSpace(v))
             {

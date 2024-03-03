@@ -8,7 +8,7 @@ public static class BuildContextImportErrorExtensions
     public static string AddImportError(this DataContext db, string error)
     {
         var errorHash = GetMd5Hash(error);
-        if(db.ImportError.Any(x => x.Hash == errorHash) == false)
+        if (db.ImportError.Any(x => x.Hash == errorHash) == false)
         {
             db.ImportError.Add(new Model.Data.ImportError
             {

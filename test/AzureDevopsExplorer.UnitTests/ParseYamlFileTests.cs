@@ -26,6 +26,8 @@ stages:
   dependsOn: []
   jobs:
   - job: validation
+    environment:
+      name: my-env-1
     pool:
       vmImage: ubuntu-22.04
     variables:
@@ -68,6 +70,8 @@ stages:
     condition: succeeded()
     pool:
       name: linux_pool
+    environment:
+      name: my-env-2
     steps:
     - task: PowerShell@2
       displayName: run plan task 1

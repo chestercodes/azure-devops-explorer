@@ -5,6 +5,7 @@ using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Extensions;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
+using KellermanSoftware.CompareNetObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
@@ -37,67 +38,142 @@ public class ServiceEndpointImport
         var serviceEndpointResult = await queries.GetServiceEndpoints();
         serviceEndpointResult.Switch(serviceEndpoints =>
         {
-            using var db = new DataContext();
-
+            var importTime = DateTime.UtcNow;
             foreach (var se in serviceEndpoints.Value)
             {
-                var endPoint = mapper.MapServiceEndpoint(se);
-                if (db.ServiceEndpoint.Any(x => x.Id == endPoint.Id))
-                {
-                    db.ServiceEndpointAuthorizationParameter.RemoveRange(db.ServiceEndpointAuthorizationParameter.Where(x => x.ServiceEndpointId == endPoint.Id));
-                    db.ServiceEndpointData.RemoveRange(db.ServiceEndpointData.Where(x => x.ServiceEndpointId == endPoint.Id));
-                    db.ServiceEndpointProjectReference.RemoveRange(db.ServiceEndpointProjectReference.Where(x => x.ServiceEndpointId == endPoint.Id));
-                    db.ServiceEndpoint.RemoveRange(db.ServiceEndpoint.Where(x => x.Id == endPoint.Id));
-                }
-
-                if (se.Authorization?.Parameters != null)
-                {
-                    foreach (var p in se?.Authorization?.Parameters)
-                    {
-                        db.ServiceEndpointAuthorizationParameter.Add(new ServiceEndpointAuthorizationParameter
-                        {
-                            ServiceEndpointId = endPoint.Id,
-                            Name = p.Key,
-                            Value = p.Value
-                        });
-                    }
-                }
-                if (se.ServiceEndpointProjectReferences != null)
-                {
-                    foreach (var pr in se?.ServiceEndpointProjectReferences)
-                    {
-                        db.ServiceEndpointProjectReference.Add(new ServiceEndpointProjectReference
-                        {
-                            ServiceEndpointId = endPoint.Id,
-                            Name = pr.Name,
-                            Description = pr.Description,
-                            ProjectReferenceId = pr.ProjectReference.Id,
-                            ProjectReferenceName = pr.ProjectReference.Name,
-                        });
-                    }
-                }
-                if (se.Data != null)
-                {
-                    foreach (var d in se?.Data)
-                    {
-                        db.ServiceEndpointData.Add(new ServiceEndpointData
-                        {
-                            ServiceEndpointId = endPoint.Id,
-                            Name = d.Key,
-                            Value = d.Value,
-                        });
-                    }
-                }
-
-                db.ServiceEndpoint.Add(endPoint);
+                AddOrUpdateServiceEndpoint(se, importTime);
             }
-
-            db.SaveChanges();
         },
         err =>
         {
             Console.WriteLine(err.AsError);
         });
+    }
+
+    private void AddOrUpdateServiceEndpoint(AzureDevopsApi.Dtos.ServiceEndpoint se, DateTime importTime)
+    {
+        var endPoint = mapper.MapServiceEndpoint(se);
+        endPoint.LastImport = importTime;
+
+        var db = new DataContext();
+        var currentServiceEndpoint = db.ServiceEndpoint.SingleOrDefault(x => x.Id == se.Id);
+        var currentServiceEndpointData = db.ServiceEndpointData.Where(x => x.ServiceEndpointId == se.Id).ToList();
+        var currentServiceEndpointProjectReference = db.ServiceEndpointProjectReference.Where(x => x.ServiceEndpointId == se.Id).ToList();
+        var currentServiceEndpointAuthorizationParameter = db.ServiceEndpointAuthorizationParameter.Where(x => x.ServiceEndpointId == se.Id).ToList();
+
+        if (se.Authorization == null || se.Authorization.Parameters == null)
+        {
+            se.Authorization = new AzureDevopsApi.Dtos.Authorization
+            {
+                Parameters = new Dictionary<string, string>()
+            };
+        }
+        if (se.ServiceEndpointProjectReferences == null)
+        {
+            se.ServiceEndpointProjectReferences = [];
+        }
+        if (se.Data == null)
+        {
+            se.Data = [];
+        }
+
+        var apiAuthorizationParameters = se.Authorization.Parameters.Select(x => new ServiceEndpointAuthorizationParameter
+        {
+            ServiceEndpointId = endPoint.Id,
+            Name = x.Key,
+            Value = x.Value
+        }).ToList();
+
+        var apiProjectReferences = se.ServiceEndpointProjectReferences.Select(x => new ServiceEndpointProjectReference
+        {
+            ServiceEndpointId = endPoint.Id,
+            Name = x.Name,
+            Description = x.Description,
+            ProjectReferenceId = x.ProjectReference.Id,
+            ProjectReferenceName = x.ProjectReference.Name,
+        }).ToList();
+
+        var apiData = se.Data.Select(x => new ServiceEndpointData
+        {
+            ServiceEndpointId = endPoint.Id,
+            Name = x.Key,
+            Value = x.Value,
+        }).ToList();
+
+        if (currentServiceEndpoint != null)
+        {
+            var compareLogic = new CompareLogic(new ComparisonConfig
+            {
+                MembersToIgnore = new List<string>
+                {
+                    nameof(ServiceEndpoint.LastImport)
+                },
+                IgnoreCollectionOrder = true,
+                MaxDifferences = 1000
+            });
+
+            var diffs = new List<string>();
+            var seComparison = compareLogic.Compare(currentServiceEndpoint, endPoint);
+            if (seComparison.AreEqual == false) { diffs.Add(seComparison.DifferencesString); }
+
+            var sePrComparison = compareLogic.Compare(currentServiceEndpointProjectReference, apiProjectReferences);
+            if (sePrComparison.AreEqual == false) { diffs.Add(sePrComparison.DifferencesString); }
+
+            var seApComparison = compareLogic.Compare(currentServiceEndpointAuthorizationParameter, apiAuthorizationParameters);
+            if (seApComparison.AreEqual == false) { diffs.Add(seApComparison.DifferencesString); }
+
+            var seDataComparison = compareLogic.Compare(currentServiceEndpointData, apiData);
+            if (seDataComparison.AreEqual == false) { diffs.Add(seDataComparison.DifferencesString); }
+
+            if (diffs.Count > 0)
+            {
+                var combinedDiff = string.Join(Environment.NewLine, diffs);
+
+                db.ServiceEndpointAuthorizationParameter.RemoveRange(currentServiceEndpointAuthorizationParameter);
+                db.ServiceEndpointData.RemoveRange(currentServiceEndpointData);
+                db.ServiceEndpointProjectReference.RemoveRange(currentServiceEndpointProjectReference);
+                db.ServiceEndpoint.RemoveRange(currentServiceEndpoint);
+
+                db.ServiceEndpointProjectReference.AddRange(apiProjectReferences);
+                db.ServiceEndpointAuthorizationParameter.AddRange(apiAuthorizationParameters);
+                db.ServiceEndpointData.AddRange(apiData);
+                db.ServiceEndpoint.Add(endPoint);
+
+                db.ServiceEndpointChange.Add(new ServiceEndpointChange
+                {
+                    ServiceEndpointId = endPoint.Id,
+                    PreviousImport = currentServiceEndpoint.LastImport,
+                    NextImport = importTime,
+                    Difference = combinedDiff
+                });
+
+                db.SaveChanges();
+                return;
+            }
+            else
+            {
+                // has not changed
+                return;
+            }
+        }
+        else
+        {
+            db.ServiceEndpointProjectReference.AddRange(apiProjectReferences);
+            db.ServiceEndpointAuthorizationParameter.AddRange(apiAuthorizationParameters);
+            db.ServiceEndpointData.AddRange(apiData);
+            db.ServiceEndpoint.Add(endPoint);
+
+            db.ServiceEndpointChange.Add(new ServiceEndpointChange
+            {
+                ServiceEndpointId = endPoint.Id,
+                PreviousImport = null,
+                NextImport = importTime,
+                Difference = $"First time or added service endpoint {endPoint.Id}"
+            });
+
+            db.SaveChanges();
+            return;
+        }
     }
 
     public async Task AddExecutionHistory()

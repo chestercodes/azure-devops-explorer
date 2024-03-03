@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureDevopsExplorer.Integra
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureDevopsExplorer.UnitTests", "test\AzureDevopsExplorer.UnitTests\AzureDevopsExplorer.UnitTests.csproj", "{9FD97FEE-3015-4111-863F-6F9D9E426E48}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureDevopsExplorer.Neo4j", "src\AzureDevopsExplorer.Neo4j\AzureDevopsExplorer.Neo4j.csproj", "{BC1FC821-745D-41B6-B103-2D6054E81A6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{9FD97FEE-3015-4111-863F-6F9D9E426E48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9FD97FEE-3015-4111-863F-6F9D9E426E48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9FD97FEE-3015-4111-863F-6F9D9E426E48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC1FC821-745D-41B6-B103-2D6054E81A6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1FC821-745D-41B6-B103-2D6054E81A6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1FC821-745D-41B6-B103-2D6054E81A6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1FC821-745D-41B6-B103-2D6054E81A6D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,5 +66,9 @@ Global
 		{6BDBF65C-BBC8-4C50-93E4-6AEC8998DC54} = {9E73D285-3D51-45D3-B29F-F1A00D44ADF9}
 		{78D7F29B-7D4D-4BF6-95E5-2EF24E0B2BF1} = {A9D1ACAC-B893-4DCE-90E4-51D712B487AD}
 		{9FD97FEE-3015-4111-863F-6F9D9E426E48} = {A9D1ACAC-B893-4DCE-90E4-51D712B487AD}
+		{BC1FC821-745D-41B6-B103-2D6054E81A6D} = {9E73D285-3D51-45D3-B29F-F1A00D44ADF9}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {01AF9A78-6CBB-4704-A259-61581F912180}
 	EndGlobalSection
 EndGlobal

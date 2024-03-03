@@ -1,8 +1,8 @@
 ﻿namespace AzureDevopsExplorer.Database.Model.Data;
 
-public class Variable
+public class VariableGroupVariable
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
     public int VariableGroupId { get; set; }
     public string Name { get; set; }
     public string? Value { get; set; }

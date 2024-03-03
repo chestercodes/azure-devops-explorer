@@ -1,11 +1,23 @@
 # Sample compose file
 version: "3"
 services:
-  wiremock:
-    image: "mcr.microsoft.com/mssql/server:2022-latest"
-    container_name: mydb
-    ports:
-      - 1433:1433
+  # wiremock:
+  #   image: "mcr.microsoft.com/mssql/server:2022-latest"
+  #   container_name: mydb
+  #   ports:
+  #     - 1433:1433
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #     MSSQL_SA_PASSWORD: p@55word
+
+  neo4j:
+    image: neo4j:latest
+    # volumes:
+    #   - ./logs:/logs
+    #   - ./import:/var/lib/neo4j/import
+    #   - ./data:/data
     environment:
-      ACCEPT_EULA: Y
-      MSSQL_SA_PASSWORD: p@55word
+      - NEO4J_AUTH=neo4j/somepassword
+    ports:
+      - "7687:7687"
+      - "7474:7474"

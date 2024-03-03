@@ -2,7 +2,7 @@
 
 public class VariableGroupProjectReference
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
     public int VariableGroupId { get; set; }
     public string Name { get; set; }
     public string ProjectReferenceName { get; set; }

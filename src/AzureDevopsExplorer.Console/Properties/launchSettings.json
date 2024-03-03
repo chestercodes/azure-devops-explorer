@@ -2,7 +2,9 @@
   "profiles": {
     "AzureDevopsExplorer.Console": {
       "commandName": "Project",
-      "commandLineArgs": "--org xxxx --project-names xxxx --data-actions builds-add-latest-default all-build-and-pipeline "
+      "commandLineArgs": "--org xxxx --project-names xxx --data-actions builds-add-latest-default all-build-and-pipeline pipeline-environment-import check-configuration-import git-add-repositories service-endpoint-add-latest variable-group-add-latest"
+      //"commandLineArgs": "--org xxxx --project-names xxx --pipeline-ids 123 --data-actions builds-add-from-start "
+      //"commandLineArgs": "--load-to-neo4j "
     }
   }
 }

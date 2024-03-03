@@ -60,13 +60,14 @@ public class LatestPipelineTemplate
             pipelineImports = imports.Select(x => (x.pid, x.pr)).ToList();
         }
 
+        var lastImportTime = DateTime.UtcNow;
         foreach (var pipeline in pipelineImports)
         {
-            await RunForPipeline(pipeline);
+            await RunForPipeline(pipeline, lastImportTime);
         }
     }
 
-    private async Task RunForPipeline((int PipelineId, int PipelineRevision) pipeline)
+    private async Task RunForPipeline((int PipelineId, int PipelineRevision) pipeline, DateTime lastImportTime)
     {
         using var db = new DataContext();
 
@@ -78,7 +79,7 @@ public class LatestPipelineTemplate
             .Where(x => x.Id == pipeline.PipelineId && x.Revision == pipeline.PipelineRevision)
             .SingleAsync();
 
-        import.LastImport = DateTime.UtcNow;
+        import.LastImport = lastImportTime;
 
         var fileResult = await httpClient.GetFile(pipelineYaml.ConfigurationRepositoryId.Value, pipelineYaml.ConfigurationPath);
         fileResult.Switch(fileContent =>

@@ -18,12 +18,16 @@ public class DataContext : DbContext
     public DbSet<BuildRepository> BuildRepository { get; set; }
     public DbSet<BuildYamlAnalysis> BuildYamlAnalysis { get; set; }
     public DbSet<BuildYamlAnalysisFile> BuildYamlAnalysisFile { get; set; }
+    public DbSet<BuildYamlAnalysisPipelineEnvironmentRef> BuildYamlAnalysisPipelineEnvironmentRef { get; set; }
+    public DbSet<BuildYamlAnalysisPipelineEnvironmentUsage> BuildYamlAnalysisPipelineEnvironmentUsage { get; set; }
     public DbSet<BuildYamlAnalysisServiceConnectionRef> BuildYamlAnalysisServiceConnectionRef { get; set; }
     public DbSet<BuildYamlAnalysisServiceConnectionUsage> BuildYamlAnalysisServiceConnectionUsage { get; set; }
     public DbSet<BuildYamlAnalysisVariableGroupRef> BuildYamlAnalysisVariableGroupRef { get; set; }
     public DbSet<BuildYamlAnalysisVariableGroupUsage> BuildYamlAnalysisVariableGroupUsage { get; set; }
     public DbSet<BuildYamlAnalysisSpecificVariableRef> BuildYamlAnalysisSpecificVariableRef { get; set; }
     public DbSet<BuildYamlAnalysisSpecificVariableUsage> BuildYamlAnalysisSpecificVariableUsage { get; set; }
+    public DbSet<CheckConfiguration> CheckConfiguration { get; set; }
+    public DbSet<CheckConfigurationChange> CheckConfigurationChange { get; set; }
     public DbSet<DefinitionReference> DefinitionReference { get; set; }
     public DbSet<GitPullRequest> GitPullRequest { get; set; }
     public DbSet<GitPullRequestReview> GitPullRequestReview { get; set; }
@@ -31,7 +35,11 @@ public class DataContext : DbContext
     public DbSet<Identity> Identity { get; set; }
     public DbSet<IdentityProperty> IdentityProperty { get; set; }
     public DbSet<IdentityImport> IdentityImport { get; set; }
+    public DbSet<LatestPipeline> LatestPipeline { get; set; }
+    public DbSet<LatestPipelineDefaultRun> LatestPipelineDefaultRun { get; set; }
     public DbSet<LatestPipelineTemplateImport> LatestPipelineTemplateImport { get; set; }
+    public DbSet<PipelineEnvironment> PipelineEnvironment { get; set; }
+    public DbSet<PipelineEnvironmentChange> PipelineEnvironmentChange { get; set; }
     public DbSet<PipelineImport> PipelineImport { get; set; }
     public DbSet<PipelineRun> PipelineRun { get; set; }
     public DbSet<PipelineRunPipelineInfo> PipelineRunPipelineInfo { get; set; }
@@ -39,15 +47,17 @@ public class DataContext : DbContext
     public DbSet<Pipeline> Pipeline { get; set; }
     public DbSet<ReferenceLink> ReferenceLink { get; set; }
     public DbSet<ServiceEndpoint> ServiceEndpoint { get; set; }
+    public DbSet<ServiceEndpointChange> ServiceEndpointChange { get; set; }
     public DbSet<ServiceEndpointAuthorizationParameter> ServiceEndpointAuthorizationParameter { get; set; }
     public DbSet<ServiceEndpointData> ServiceEndpointData { get; set; }
     public DbSet<ServiceEndpointProjectReference> ServiceEndpointProjectReference { get; set; }
     public DbSet<ServiceEndpointExecutionHistory> ServiceEndpointExecutionHistory { get; set; }
     public DbSet<TeamProjectReference> TeamProjectReference { get; set; }
     public DbSet<TaskOrchestrationPlanReference> TaskOrchestrationPlanReference { get; set; }
-    public DbSet<Variable> Variable { get; set; }
     public DbSet<VariableGroup> VariableGroup { get; set; }
+    public DbSet<VariableGroupChange> VariableGroupChange { get; set; }
     public DbSet<VariableGroupProjectReference> VariableGroupProjectReference { get; set; }
+    public DbSet<VariableGroupVariable> VariableGroupVariable { get; set; }
 
     public DbSet<ImportState> ImportState { get; set; }
     public DbSet<ImportError> ImportError { get; set; }

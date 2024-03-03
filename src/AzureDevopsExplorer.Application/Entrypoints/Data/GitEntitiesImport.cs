@@ -74,6 +74,7 @@ public class GitEntitiesImport
             .ToList();
 
         var findQueries = new FindPullRequestsAndEntities(connection, projectName);
+        List<Guid> addedIdentityIds = new();
 
         foreach (var repoId in existingRepoIds)
         {
@@ -110,7 +111,7 @@ public class GitEntitiesImport
                 List<GitPullRequestReview> reviews = new();
                 foreach (var review in pullRequest.Reviewers)
                 {
-                    AddIdentityToImportTable(db, Guid.Parse(review.Id));
+                    AddIdentityToImportTable(db, Guid.Parse(review.Id), addedIdentityIds);
 
                     reviews.Add(new GitPullRequestReview
                     {
@@ -124,7 +125,7 @@ public class GitEntitiesImport
                     {
                         foreach (var votedFor in review.VotedFor)
                         {
-                            AddIdentityToImportTable(db, Guid.Parse(votedFor.Id));
+                            AddIdentityToImportTable(db, Guid.Parse(votedFor.Id), addedIdentityIds);
 
                             reviews.Add(new GitPullRequestReview
                             {
@@ -139,14 +140,20 @@ public class GitEntitiesImport
                 db.GitPullRequest.Add(pr);
                 db.GitPullRequestReview.AddRange(reviews);
             }
+            await db.SaveChangesAsync();
         }
-        await db.SaveChangesAsync();
     }
 
-    private static void AddIdentityToImportTable(DataContext db, Guid id)
+    private static void AddIdentityToImportTable(DataContext db, Guid id, List<Guid> addedIdentityIds)
     {
+        if (addedIdentityIds.Contains(id))
+        {
+            return;
+        }
+
         if (db.IdentityImport.Any(x => x.Id == id) == false)
         {
+            addedIdentityIds.Add(id);
             db.IdentityImport.Add(new IdentityImport
             {
                 Id = id,

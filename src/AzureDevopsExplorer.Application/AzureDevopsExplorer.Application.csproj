@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="CompareNETObjects" Version="4.83.0" />
     <PackageReference Include="OneOf" Version="3.0.263" />
     <PackageReference Include="YamlDotNet" Version="13.7.1" />
   </ItemGroup>
@@ -8,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AzureDevopsExplorer.AzureDevopsApi\AzureDevopsExplorer.AzureDevopsApi.csproj" />
     <ProjectReference Include="..\AzureDevopsExplorer.Database\AzureDevopsExplorer.Database.csproj" />
+    <ProjectReference Include="..\AzureDevopsExplorer.Neo4j\AzureDevopsExplorer.Neo4j.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

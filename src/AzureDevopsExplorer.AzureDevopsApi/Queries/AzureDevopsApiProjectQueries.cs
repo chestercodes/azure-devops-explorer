@@ -41,4 +41,15 @@ public class AzureDevopsApiProjectQueries
     {
         return await httpClient.GetJson<ListResponse<ServiceEndpoint>>($"serviceendpoint/endpoints");
     }
+
+    public async Task<AzureDevopsApiResult<ListResponse<PipelineEnvironment>>> GetPipelineEnvironments()
+    {
+        return await httpClient.GetJson<ListResponse<PipelineEnvironment>>($"pipelines/environments");
+    }
+
+    public record CheckConfigurationsQueryResource(string id, string name, string type);
+    public async Task<AzureDevopsApiResult<ListResponse<ConfigurationCheck>>> CheckConfigurationsQuery(CheckConfigurationsQueryResource[] resources)
+    {
+        return await httpClient.PostJson<ListResponse<ConfigurationCheck>>($"pipelines/checks/queryconfigurations?$expand=settings&api-version=7.2-preview.1", resources);
+    }
 }

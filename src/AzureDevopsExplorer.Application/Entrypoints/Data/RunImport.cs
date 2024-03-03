@@ -54,7 +54,14 @@ public class RunImport
         var variableGroupImport = new VariableGroupImport(httpClient);
         await variableGroupImport.Run(config);
 
+        var pipelineEnvironmentImport = new PipelineEnvironmentImport(httpClient);
+        await pipelineEnvironmentImport.Run(config);
+
+        var checkConfigurationImport = new CheckConfigurationImport(httpClient);
+        await checkConfigurationImport.Run(config);
+
         var identityImport = new IdentityImportCmd(connection, projectName);
         await identityImport.Run(config);
+
     }
 }

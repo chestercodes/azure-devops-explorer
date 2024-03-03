@@ -10,9 +10,11 @@ public class DataConfig
     public bool BuildAddArtifacts { get; set; } = false;
     public bool BuildAddTimeline { get; set; } = false;
     public bool BuildRunYamlAnalysis { get; set; } = false;
+    public bool CheckConfigurationImport { get; set; } = false;
     public bool GitAddRepositories { get; set; } = false;
     public bool GitAddPullRequests { get; set; } = false;
     public bool IdentityImport { get; set; } = false;
+    public bool PipelineEnvironmentImport { get; set; } = false;
     public bool PipelineRunImport { get; set; } = false;
     public bool PipelineRunTemplateImport { get; set; } = false;
     public bool ServiceEndpointAddLatest { get; set; } = false;
@@ -36,9 +38,11 @@ public class DataConfig
         BuildAddArtifacts = BuildAddArtifacts || other.BuildAddArtifacts;
         BuildAddTimeline = BuildAddTimeline || other.BuildAddTimeline;
         BuildRunYamlAnalysis = BuildRunYamlAnalysis || other.BuildRunYamlAnalysis;
+        CheckConfigurationImport = CheckConfigurationImport || other.CheckConfigurationImport;
         GitAddRepositories = GitAddRepositories || other.GitAddRepositories;
         GitAddPullRequests = GitAddPullRequests || other.GitAddPullRequests;
         IdentityImport = IdentityImport || other.IdentityImport;
+        PipelineEnvironmentImport = PipelineEnvironmentImport || other.PipelineEnvironmentImport;
         PipelineRunImport = PipelineRunImport || other.PipelineRunImport;
         PipelineRunTemplateImport = PipelineRunTemplateImport || other.PipelineRunTemplateImport;
         ServiceEndpointAddLatest = ServiceEndpointAddLatest || other.ServiceEndpointAddLatest;
@@ -58,9 +62,11 @@ public class DataConfig
                 || BuildAddArtifacts
                 || BuildAddTimeline
                 || BuildRunYamlAnalysis
+                || CheckConfigurationImport
                 || GitAddRepositories
                 || GitAddPullRequests
                 || IdentityImport
+                || PipelineEnvironmentImport
                 || PipelineRunImport
                 || PipelineRunTemplateImport
                 || ServiceEndpointAddLatest

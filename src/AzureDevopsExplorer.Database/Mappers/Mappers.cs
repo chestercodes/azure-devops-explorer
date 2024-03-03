@@ -65,5 +65,10 @@ namespace AzureDevopsExplorer.Database.Mappers
         public partial Model.Data.GitPullRequest MapGitPullRequest(Microsoft.TeamFoundation.SourceControl.WebApi.GitPullRequest data);
 
         public partial Model.Data.Identity MapIdentity(Microsoft.VisualStudio.Services.Identity.Identity data);
+
+        [MapperIgnoreTarget(nameof(Model.Data.CheckConfiguration.Settings))]
+        public partial Model.Data.CheckConfiguration MapCheckConfiguration(AzureDevopsApi.Dtos.ConfigurationCheck data);
+
+        public partial Model.Data.PipelineEnvironment MapPipelineEnvironment(AzureDevopsApi.Dtos.PipelineEnvironment data);
     }
 }

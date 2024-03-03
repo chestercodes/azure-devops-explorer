@@ -28,4 +28,5 @@ public class ServiceEndpoint
     //public List<ServiceEndpointProjectReference>? ServiceEndpointProjectReferences { get; set; }
     public string? OperationStatusState { get; set; }
     public string? OperationStatusStatusMessage { get; set; }
+    public DateTime? LastImport { get; set; }
 }

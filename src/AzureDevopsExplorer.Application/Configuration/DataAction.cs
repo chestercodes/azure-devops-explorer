@@ -68,6 +68,12 @@ public class ApplicationActions
                 },
                 new DataAction
                 {
+                    Command = "check-configuration-import",
+                    Info = "Add check configurations.",
+                    Config = new DataConfig { CheckConfigurationImport = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
                     Command = "git-add-repositories",
                     Info = "Add git repositories.",
                     Config = new DataConfig { GitAddRepositories = true }.ToApplicationConfig()
@@ -83,6 +89,12 @@ public class ApplicationActions
                     Command = "identity-import",
                     Info = "Add identity.",
                     Config = new DataConfig { IdentityImport = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "pipeline-environment-import",
+                    Info = "Add pipeline environments information.",
+                    Config = new DataConfig { PipelineEnvironmentImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {

@@ -55,8 +55,6 @@ public class BuildYamlAnalysis
         await db.SaveChangesAsync();
     }
 
-
-
     public async Task RunAddBuildYaml()
     {
         var buildClient = vssConnection.GetClient<BuildHttpClient>();
@@ -113,11 +111,16 @@ public class BuildYamlAnalysis
             await UpdateRefTables(db, parseResults);
         }
 
+        Dictionary<string, int> pipelineEnvironmentRefs = new();
         Dictionary<string, int> serviceConnectionRefs = new();
         Dictionary<string, int> variableGroupRefs = new();
         Dictionary<string, int> variableRefs = new();
         using (var db = new DataContext())
         {
+            foreach (var pe in db.BuildYamlAnalysisPipelineEnvironmentRef.ToList())
+            {
+                pipelineEnvironmentRefs.Add(pe.Name, pe.Id);
+            }
             foreach (var sc in db.BuildYamlAnalysisServiceConnectionRef.ToList())
             {
                 serviceConnectionRefs.Add(sc.Name, sc.Id);
@@ -134,16 +137,25 @@ public class BuildYamlAnalysis
 
         foreach (var result in parseResults)
         {
-            AddEntities(serviceConnectionRefs, variableGroupRefs, variableRefs, result);
+            AddEntities(pipelineEnvironmentRefs, serviceConnectionRefs, variableGroupRefs, variableRefs, result);
         }
     }
 
-    private static void AddEntities(Dictionary<string, int> serviceConnectionRefs, Dictionary<string, int> variableGroupRefs, Dictionary<string, int> variableRefs, (string, OneOf<ParsedYamlFile, Exception>) result)
+    private static void AddEntities(Dictionary<string, int> pipelineEnvironmentRefs, Dictionary<string, int> serviceConnectionRefs, Dictionary<string, int> variableGroupRefs, Dictionary<string, int> variableRefs, (string, OneOf<ParsedYamlFile, Exception>) result)
     {
         var db = new DataContext();
         var file = db.BuildYamlAnalysisFile.Single(x => x.Hash == result.Item1);
         result.Item2.Switch(parsedFile =>
         {
+            foreach (var name in parsedFile.PipelineEnvironments.Select(x => x.Name).Distinct())
+            {
+                var peId = pipelineEnvironmentRefs.ContainsKey(name) ? pipelineEnvironmentRefs[name] : throw new Exception($"Could not get ref for pipeline environment {name}");
+                db.BuildYamlAnalysisPipelineEnvironmentUsage.Add(new BuildYamlAnalysisPipelineEnvironmentUsage
+                {
+                    FileHash = file.Hash,
+                    PipelineEnvironmentRefId = peId
+                });
+            }
             foreach (var name in parsedFile.ServiceConnections.Select(x => x.Name).Distinct())
             {
                 var scId = serviceConnectionRefs.ContainsKey(name) ? serviceConnectionRefs[name] : throw new Exception($"Could not get ref for service connection {name}");
@@ -185,6 +197,23 @@ public class BuildYamlAnalysis
     private static async Task UpdateRefTables(DataContext db, List<(string, OneOf<ParsedYamlFile, Exception>)> parseResults)
     {
         var successfulFiles = parseResults.Where(x => x.Item2.IsT0).Select(x => x.Item2.AsT0);
+
+        var distinctPipelineEnvironments =
+            successfulFiles.SelectMany(x => x.PipelineEnvironments.Select(x => x.Name))
+            .Distinct();
+        var pipelineEnvironmentsAlreadyPresent =
+            db.BuildYamlAnalysisPipelineEnvironmentRef
+            .Where(x => distinctPipelineEnvironments.Contains(x.Name))
+            .Select(x => x.Name)
+            .ToList();
+        var pipelineEnvironmentsToAdd = distinctPipelineEnvironments.Except(pipelineEnvironmentsAlreadyPresent);
+        foreach (var pe in pipelineEnvironmentsToAdd)
+        {
+            db.BuildYamlAnalysisPipelineEnvironmentRef.Add(new BuildYamlAnalysisPipelineEnvironmentRef
+            {
+                Name = pe
+            });
+        }
 
         var distinctServiceConnections =
             successfulFiles.SelectMany(x => x.ServiceConnections.Select(x => x.Name))
