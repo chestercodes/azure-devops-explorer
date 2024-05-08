@@ -22,6 +22,13 @@ public class FindIdentity
         return identity;
     }
 
+    public async Task<Identity> GetId(string puid)
+    {
+        var client = connection.GetClient<IdentityHttpClient>();
+        var identity = await client.ReadIdentityAsync(puid);
+        return identity;
+    }
+
     public async Task<PagedIdentities> GetAll(string? continuationToken = null)
     {
         var client = connection.GetClient<IdentityHttpClient>();

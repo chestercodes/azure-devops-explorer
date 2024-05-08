@@ -5,6 +5,8 @@ using Microsoft.VisualStudio.Services.WebApi;
 using System.CommandLine;
 using AzureDevopsExplorer.AzureDevopsApi.Auth;
 using Microsoft.VisualStudio.Services.OAuth;
+using AzureDevopsExplorer.Application.Entrypoints.Loader;
+using AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 
 public class CliCommand
 {
@@ -81,20 +83,16 @@ public class CliCommand
                 OrgName = organisationName,
             };
             var httpClientOrg = new AzureDevopsApiOrgClient(azureDevopsApiOrgInfo);
-            var orgQueries = new AzureDevopsApiOrgQueries(httpClientOrg);
-
-            var projNames = await GetProjectNames(orgQueries, projectNames);
+            var projNames = await GetProjectNames(httpClientOrg, projectNames);
             foreach (var projName in projNames)
             {
-                var azureDevopsApiInfo = azureDevopsApiOrgInfo.AsProjectInfo(projName);
-                var httpClient = new AzureDevopsApiProjectClient(azureDevopsApiInfo);
-                var runImport = new RunImport(httpClient, connection, projName);
+                var runImport = new RunImport(httpClientOrg, connection, projName);
                 await runImport.Run(config.DataConfig);
             }
         }
 
-        var latestPipelineAndRun = new LatestPipelineAndRun();
-        await latestPipelineAndRun.Run();
+        var runEvaluate = new RunEvaluate();
+        await runEvaluate.Run();
 
         if (loadToNeo4J)
         {
@@ -111,13 +109,14 @@ public class CliCommand
         return bearerToken;
     }
 
-    private static async Task<List<string>> GetProjectNames(AzureDevopsApiOrgQueries orgQueries, string[] projectNames)
+    private static async Task<List<string>> GetProjectNames(AzureDevopsApiOrgClient httpClientOrg, string[] projectNames)
     {
         if (projectNames.Length != 0)
         {
             return projectNames.ToList();
         }
 
+        var orgQueries = new AzureDevopsApiOrgQueries(httpClientOrg);
         var projectsResult = await orgQueries.GetProjects();
 
         return projectsResult.Match(

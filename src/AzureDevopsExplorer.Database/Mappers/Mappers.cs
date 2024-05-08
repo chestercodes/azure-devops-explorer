@@ -7,14 +7,14 @@ namespace AzureDevopsExplorer.Database.Mappers
     [Mapper(EnumMappingStrategy = EnumMappingStrategy.ByName, EnumMappingIgnoreCase = true)]
     public partial class Mappers
     {
-        public partial Model.Data.TeamProjectReference MapTeamProjectReference(Microsoft.TeamFoundation.Core.WebApi.TeamProjectReference x);
+        public partial Model.Data.Project MapTeamProjectReference(Microsoft.TeamFoundation.Core.WebApi.TeamProjectReference x);
         [MapperIgnoreTarget(nameof(Model.Data.Build.RepositoryId))]
         [MapperIgnoreTarget(nameof(Model.Data.Build.RequestedById))]
         [MapperIgnoreTarget(nameof(Model.Data.Build.RequestedForId))]
         [MapperIgnoreTarget(nameof(Model.Data.Build.DeletedById))]
         [MapperIgnoreTarget(nameof(Model.Data.Build.LastChangedById))]
         public partial Model.Data.Build MapBuild(Microsoft.TeamFoundation.Build.WebApi.Build x);
-        public partial Model.Data.DefinitionReference MapDefinitionReference(Microsoft.TeamFoundation.Build.WebApi.DefinitionReference x);
+        public partial Model.Data.Definition MapDefinitionReference(Microsoft.TeamFoundation.Build.WebApi.DefinitionReference x);
         public partial Model.Data.BuildRepository MapBuildRepository(Microsoft.TeamFoundation.Build.WebApi.BuildRepository x);
         public partial Model.Data.BuildArtifact MapBuildArtifact(Microsoft.TeamFoundation.Build.WebApi.BuildArtifact x);
         public partial Model.Data.BuildTimeline MapBuildTimeline(Microsoft.TeamFoundation.Build.WebApi.Timeline x);
@@ -64,11 +64,14 @@ namespace AzureDevopsExplorer.Database.Mappers
         [MapProperty(nameof(PR.LastMergeTargetCommit) + "." + nameof(GitCommitRef.CommitId), nameof(Model.Data.GitPullRequest.LastMergeTargetCommitId))]
         public partial Model.Data.GitPullRequest MapGitPullRequest(Microsoft.TeamFoundation.SourceControl.WebApi.GitPullRequest data);
 
-        public partial Model.Data.Identity MapIdentity(Microsoft.VisualStudio.Services.Identity.Identity data);
+        public partial Model.Data.Identity MapIdentity(AzureDevopsApi.Dtos.Identity data);
 
         [MapperIgnoreTarget(nameof(Model.Data.CheckConfiguration.Settings))]
         public partial Model.Data.CheckConfiguration MapCheckConfiguration(AzureDevopsApi.Dtos.ConfigurationCheck data);
 
         public partial Model.Data.PipelineEnvironment MapPipelineEnvironment(AzureDevopsApi.Dtos.PipelineEnvironment data);
+
+        public partial Model.Data.SecurityNamespace MapSecurityNamespace(AzureDevopsApi.Dtos.SecurityNamespace data);
+        public partial Model.Data.SecureFile MapSecureFile(AzureDevopsApi.Dtos.SecureFile data);
     }
 }

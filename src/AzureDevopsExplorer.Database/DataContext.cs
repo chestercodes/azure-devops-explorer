@@ -5,6 +5,8 @@ using AzureDevopsExplorer.Database.Model.Data;
 
 public class DataContext : DbContext
 {
+    public DbSet<AccessControl> AccessControl { get; set; }
+    public DbSet<AccessControlChange> AccessControlChange { get; set; }
     public DbSet<Build> Build { get; set; }
     public DbSet<BuildArtifact> BuildArtifact { get; set; }
     public DbSet<BuildArtifactProperty> BuildArtifactProperty { get; set; }
@@ -16,6 +18,7 @@ public class DataContext : DbContext
     public DbSet<BuildTemplateParameter> BuildTemplateParameter { get; set; }
     public DbSet<BuildTriggerInfo> BuildTriggerInfo { get; set; }
     public DbSet<BuildRepository> BuildRepository { get; set; }
+    public DbSet<BuildTaskOrchestrationPlanReference> BuildTaskOrchestrationPlanReference { get; set; }
     public DbSet<BuildYamlAnalysis> BuildYamlAnalysis { get; set; }
     public DbSet<BuildYamlAnalysisFile> BuildYamlAnalysisFile { get; set; }
     public DbSet<BuildYamlAnalysisPipelineEnvironmentRef> BuildYamlAnalysisPipelineEnvironmentRef { get; set; }
@@ -26,15 +29,21 @@ public class DataContext : DbContext
     public DbSet<BuildYamlAnalysisVariableGroupUsage> BuildYamlAnalysisVariableGroupUsage { get; set; }
     public DbSet<BuildYamlAnalysisSpecificVariableRef> BuildYamlAnalysisSpecificVariableRef { get; set; }
     public DbSet<BuildYamlAnalysisSpecificVariableUsage> BuildYamlAnalysisSpecificVariableUsage { get; set; }
+    public DbSet<CodeSearchKeyword> CodeSearchKeyword { get; set; }
+    public DbSet<CodeSearchKeywordUsage> CodeSearchKeywordUsage { get; set; }
     public DbSet<CheckConfiguration> CheckConfiguration { get; set; }
     public DbSet<CheckConfigurationChange> CheckConfigurationChange { get; set; }
-    public DbSet<DefinitionReference> DefinitionReference { get; set; }
+    public DbSet<Definition> Definition { get; set; }
     public DbSet<GitPullRequest> GitPullRequest { get; set; }
     public DbSet<GitPullRequestReview> GitPullRequestReview { get; set; }
     public DbSet<GitRepository> GitRepository { get; set; }
     public DbSet<Identity> Identity { get; set; }
-    public DbSet<IdentityProperty> IdentityProperty { get; set; }
+    //public DbSet<IdentityProperty> IdentityProperty { get; set; }
     public DbSet<IdentityImport> IdentityImport { get; set; }
+    public DbSet<IdentityChange> IdentityChange { get; set; }
+    public DbSet<IdentityMemberOf> IdentityMemberOf { get; set; }
+    public DbSet<IdentityMember> IdentityMember { get; set; }
+
     public DbSet<LatestPipeline> LatestPipeline { get; set; }
     public DbSet<LatestPipelineDefaultRun> LatestPipelineDefaultRun { get; set; }
     public DbSet<LatestPipelineTemplateImport> LatestPipelineTemplateImport { get; set; }
@@ -45,15 +54,20 @@ public class DataContext : DbContext
     public DbSet<PipelineRunPipelineInfo> PipelineRunPipelineInfo { get; set; }
     public DbSet<PipelineRunRepositoryInfo> PipelineRunRepositoryInfo { get; set; }
     public DbSet<Pipeline> Pipeline { get; set; }
-    public DbSet<ReferenceLink> ReferenceLink { get; set; }
+    public DbSet<PipelineVariable> PipelineVariable { get; set; }
+    public DbSet<Project> Project { get; set; }
+    public DbSet<SecureFile> SecureFile { get; set; }
+    public DbSet<SecureFileChange> SecureFileChange { get; set; }
+    public DbSet<SecurityNamespace> SecurityNamespace { get; set; }
+    public DbSet<SecurityNamespaceAction> SecurityNamespaceAction { get; set; }
+    public DbSet<SecurityNamespacePermission> SecurityNamespacePermission { get; set; }
+    public DbSet<SecurityNamespaceResourcePermission> SecurityNamespaceResourcePermission { get; set; }
     public DbSet<ServiceEndpoint> ServiceEndpoint { get; set; }
     public DbSet<ServiceEndpointChange> ServiceEndpointChange { get; set; }
     public DbSet<ServiceEndpointAuthorizationParameter> ServiceEndpointAuthorizationParameter { get; set; }
     public DbSet<ServiceEndpointData> ServiceEndpointData { get; set; }
     public DbSet<ServiceEndpointProjectReference> ServiceEndpointProjectReference { get; set; }
     public DbSet<ServiceEndpointExecutionHistory> ServiceEndpointExecutionHistory { get; set; }
-    public DbSet<TeamProjectReference> TeamProjectReference { get; set; }
-    public DbSet<TaskOrchestrationPlanReference> TaskOrchestrationPlanReference { get; set; }
     public DbSet<VariableGroup> VariableGroup { get; set; }
     public DbSet<VariableGroupChange> VariableGroupChange { get; set; }
     public DbSet<VariableGroupProjectReference> VariableGroupProjectReference { get; set; }
@@ -97,18 +111,14 @@ public class DataContext : DbContext
             .Property(x => x.Type)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<DefinitionReference>()
+        modelBuilder.Entity<Definition>()
             .Property(x => x.QueueStatus)
             .AddEnumMaxLengthAndConversion();
-        modelBuilder.Entity<DefinitionReference>()
+        modelBuilder.Entity<Definition>()
             .Property(x => x.Type)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<ReferenceLink>()
-            .Property(x => x.SourceType)
-            .AddEnumMaxLengthAndConversion();
-
-        modelBuilder.Entity<TeamProjectReference>()
+        modelBuilder.Entity<Project>()
             .Property(u => u.State)
             .AddEnumMaxLengthAndConversion();
 
@@ -148,10 +158,6 @@ public class DataContext : DbContext
             .Property(u => u.CompletionOptionsMergeStrategy)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<Identity>()
-            .Property(u => u.MetaType)
-            .AddEnumMaxLengthAndConversion();
-
         modelBuilder.Entity<PipelineRun>()
             .Property(u => u.State)
             .AddEnumMaxLengthAndConversion();
@@ -162,6 +168,14 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<PipelineRun>()
             .Property(u => u.Result)
+            .AddEnumMaxLengthAndConversion();
+
+        modelBuilder.Entity<SecurityNamespaceResourcePermission>()
+            .Property(u => u.ResourceType)
+            .AddEnumMaxLengthAndConversion();
+
+        modelBuilder.Entity<SecurityNamespaceResourcePermission>()
+            .Property(u => u.AllowOrDeny)
             .AddEnumMaxLengthAndConversion();
 
         modelBuilder.Entity<ServiceEndpointExecutionHistory>()

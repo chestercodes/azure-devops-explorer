@@ -30,23 +30,23 @@ public class VariableGroupImport
     {
         var queries = new AzureDevopsApiProjectQueries(httpClient);
         var variableGroupResult = await queries.GetVariableGroups();
-        variableGroupResult.Switch(variableGroups =>
+        if (variableGroupResult.IsT1)
         {
-            var importTime = DateTime.UtcNow;
-            var variableGroupIdsToAdd = variableGroups.Value.Select(x => x.Id);
+            Console.WriteLine(variableGroupResult.AsT1.AsError);
+            return;
+        }
 
-            foreach (var vgId in variableGroupIdsToAdd)
-            {
-                AddVariableGroup(vgId, importTime);
-            }
-        },
-        err =>
+        var variableGroups = variableGroupResult.AsT0.Value;
+        var importTime = DateTime.UtcNow;
+        var variableGroupIdsToAdd = variableGroups.Select(x => x.Id);
+
+        foreach (var vgId in variableGroupIdsToAdd)
         {
-            Console.WriteLine(err.AsError);
-        });
+            await AddVariableGroup(vgId, importTime);
+        }
     }
 
-    private void AddVariableGroup(int id, DateTime importTime)
+    private async Task AddVariableGroup(int id, DateTime importTime)
     {
         var queries = new AzureDevopsApiProjectQueries(httpClient);
         using var db = new DataContext();
@@ -55,73 +55,74 @@ public class VariableGroupImport
         var currentVariableGroup = db.VariableGroup.SingleOrDefault(x => x.Id == id);
         var currentVariableGroupProjectReference = db.VariableGroupProjectReference.Where(x => x.VariableGroupId == id).ToList();
 
-        var variableGroupResult = queries.GetVariableGroup(id).Result;
-        variableGroupResult.Switch(vg =>
+        var variableGroupResult = await queries.GetVariableGroup(id);
+        if (variableGroupResult.IsT1)
         {
-            var identityIds = new HashSet<Guid>();
-            var variableGroupFromApi = VariableGroupFromApi(vg, identityIds);
+            Console.WriteLine(variableGroupResult.AsT1.AsError);
+            return;
+        }
 
-            if (currentVariableGroup != null)
+        var identityIds = new HashSet<Guid>();
+        var variableGroupFromApi = VariableGroupFromApi(variableGroupResult.AsT0, identityIds);
+
+        if (currentVariableGroup != null)
+        {
+            currentVariableGroup.Variables = currentVariables;
+            currentVariableGroup.VariableGroupProjectReferences = currentVariableGroupProjectReference;
+
+            var compareLogic = new CompareLogic(new ComparisonConfig
             {
-                currentVariableGroup.Variables = currentVariables;
-                currentVariableGroup.VariableGroupProjectReferences = currentVariableGroupProjectReference;
+                MembersToIgnore = new List<string> {
+                    nameof(VariableGroupVariable.Id),
+                    nameof(VariableGroup.LastImport)
+                },
+                IgnoreCollectionOrder = true,
+                MaxDifferences = 1000
+            });
 
-                var compareLogic = new CompareLogic(new ComparisonConfig
-                {
-                    MembersToIgnore = new List<string> {
-                        nameof(VariableGroupVariable.Id),
-                        nameof(VariableGroup.LastImport)
-                    },
-                    IgnoreCollectionOrder = true,
-                    MaxDifferences = 1000
-                });
-
-                var variableGroupComparison = compareLogic.Compare(currentVariableGroup, variableGroupFromApi);
-                if (variableGroupComparison.AreEqual == false)
-                {
-                    db.VariableGroupVariable.RemoveRange(currentVariables);
-                    db.VariableGroup.Remove(currentVariableGroup);
-                    db.VariableGroupProjectReference.RemoveRange(currentVariableGroupProjectReference);
-
-                    db.VariableGroupChange.Add(new VariableGroupChange
-                    {
-                        VariableGroupId = currentVariableGroup.Id,
-                        PreviousImport = currentVariableGroup.LastImport,
-                        NextImport = importTime,
-                        Difference = variableGroupComparison.DifferencesString
-                    });
-
-                    variableGroupFromApi.LastImport = importTime;
-                    db.VariableGroup.Add(variableGroupFromApi);
-                    db.SaveChanges();
-                    return;
-                }
-                else
-                {
-                    // has not changed
-                    return;
-                }
-            }
-            else
+            var variableGroupComparison = compareLogic.CompareSameType(currentVariableGroup, variableGroupFromApi);
+            if (variableGroupComparison.AreEqual == false)
             {
-                // not seen before, might have been added or is first import
-                variableGroupFromApi.LastImport = importTime;
-                db.VariableGroup.Add(variableGroupFromApi);
+                db.VariableGroupVariable.RemoveRange(currentVariables);
+                db.VariableGroup.Remove(currentVariableGroup);
+                db.VariableGroupProjectReference.RemoveRange(currentVariableGroupProjectReference);
 
                 db.VariableGroupChange.Add(new VariableGroupChange
                 {
-                    VariableGroupId = variableGroupFromApi.Id,
-                    PreviousImport = null,
+                    VariableGroupId = currentVariableGroup.Id,
+                    PreviousImport = currentVariableGroup.LastImport,
                     NextImport = importTime,
-                    Difference = $"First time seeing variable group {variableGroupFromApi.Id}"
+                    Difference = variableGroupComparison.DifferencesString
                 });
+
+                variableGroupFromApi.LastImport = importTime;
+                db.VariableGroup.Add(variableGroupFromApi);
                 db.SaveChanges();
                 return;
             }
-        }, err =>
+            else
+            {
+                // has not changed
+                return;
+            }
+        }
+        else
         {
-            Console.WriteLine(err.AsError);
-        });
+            // not seen before, might have been added or is first import
+            variableGroupFromApi.LastImport = importTime;
+            db.VariableGroup.Add(variableGroupFromApi);
+
+            db.VariableGroupChange.Add(new VariableGroupChange
+            {
+                VariableGroupId = variableGroupFromApi.Id,
+                PreviousImport = null,
+                NextImport = importTime,
+                Difference = $"First time seeing variable group {variableGroupFromApi.Id}"
+            });
+            db.SaveChanges();
+            return;
+        }
+
     }
 
     private VariableGroup VariableGroupFromApi(AzureDevopsApi.Dtos.VariableGroup vg, HashSet<Guid> identityIds)
@@ -186,12 +187,12 @@ public class VariableGroupImport
             return;
         }
 
-        var exists = db.IdentityImport.Any(x => x.Id == id);
+        var exists = db.IdentityImport.Any(x => x.IdentityId == id);
         if (!exists)
         {
             db.IdentityImport.Add(new IdentityImport
             {
-                Id = id,
+                IdentityId = id,
                 LastImport = null
             });
         }

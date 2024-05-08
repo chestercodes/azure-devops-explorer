@@ -33,7 +33,7 @@ public class PipelineImportCmd
         using var db = new DataContext();
 
         var missingInImportsTable =
-            from d in db.DefinitionReference
+            from d in db.Definition
             join p in db.PipelineImport on d.Id equals p.PipelineId into g
             from p in g.DefaultIfEmpty()
             where p == null
@@ -85,6 +85,19 @@ public class PipelineImportCmd
             {
                 var pipelineYaml = mapper.MapPipeline(pipeline);
                 db.Pipeline.Add(pipelineYaml);
+
+                foreach (var variable in pipeline?.Configuration?.Variables ?? [])
+                {
+                    db.PipelineVariable.Add(new PipelineVariable
+                    {
+                        PipelineId = pipelineId,
+                        PipelineRevision = pipelineRevision,
+                        Name = variable.Key,
+                        Value = variable.Value.Value,
+                        IsSecret = variable.Value.IsSecret,
+                    });
+                }
+
                 pipelineImport.PipelineImportState = PipelineImportState.Done;
                 db.SaveChanges();
             }, err =>

@@ -8,4 +8,5 @@ public class AzureDevopsApiProjectInfo
     public string OrgName { get; set; }
 
     public string ApiUrl => $"https://dev.azure.com/{OrgName}/{ProjectName}/_apis";
+    public string SearchApiUrl => $"https://almsearch.dev.azure.com/{OrgName}/{ProjectName}/_apis";
 }

@@ -47,4 +47,29 @@ public class AzureDevopsApiOrgClient
             }
         }
     }
+
+    public async Task<AzureDevopsApiResult<TJson>> GetJsonFromVssps<TJson>(string path)
+    {
+        try
+        {
+            var client = GetClient();
+            var url = $"{Info.VsspsApiUrl}/{path}";
+            var req = client.Request(url);
+            var data = await req.GetJsonAsync<TJson>();
+            return data;
+        }
+        catch (FlurlHttpException ex)
+        {
+            try
+            {
+                var err = await ex.GetResponseJsonAsync<ErrorResponse>();
+                return AzureDevopsApiError.FromError(err, ex);
+            }
+            catch (Exception unEx)
+            {
+                var thing = await ex.Call.Response.GetStringAsync();
+                return AzureDevopsApiError.FromEx(unEx);
+            }
+        }
+    }
 }

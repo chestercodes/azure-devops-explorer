@@ -32,35 +32,14 @@ public static class BuildContextAddIdentityExtensions
             return;
         }
 
-        var exists = db.IdentityImport.Any(x => x.Id == id);
+        var exists = db.IdentityImport.Any(x => x.IdentityId == id);
         if (!exists)
         {
             db.IdentityImport.Add(new IdentityImport
             {
-                Id = id,
+                IdentityId = id,
                 LastImport = null
             });
         }
-    }
-
-    public static DataContext AddReferenceLinks(this DataContext db, Microsoft.VisualStudio.Services.WebApi.ReferenceLinks links, Guid projectId, ReferenceLinkSourceType sourceType, string sourceId)
-    {
-        foreach (var link in links.Links)
-        {
-            var refLink = link.Value as Microsoft.VisualStudio.Services.WebApi.ReferenceLink;
-            if (refLink != null)
-            {
-                db.ReferenceLink.Add(new ReferenceLink
-                {
-                    ProjectId = projectId,
-                    SourceType = sourceType,
-                    SourceId = sourceId,
-                    Name = link.Key,
-                    Href = new Uri(refLink.Href)
-                });
-            }
-        }
-
-        return db;
     }
 }

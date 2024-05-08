@@ -4,6 +4,7 @@ using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Extensions;
+using AzureDevopsExporter.Application.Domain;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 

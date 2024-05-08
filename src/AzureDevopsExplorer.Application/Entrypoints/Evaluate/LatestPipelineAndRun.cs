@@ -2,7 +2,7 @@
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
 
-namespace AzureDevopsExplorer.Application.Entrypoints.Data;
+namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 public class LatestPipelineAndRun
 {
     public async Task Run()
@@ -15,7 +15,7 @@ public class LatestPipelineAndRun
     {
         using var db = new DataContext();
 
-        var latestPipelineAndRevisions = db.DefinitionReference
+        var latestPipelineAndRevisions = db.Definition
             .GroupBy(dr => dr.Id)
             .Select(group => new
             {
@@ -27,7 +27,7 @@ public class LatestPipelineAndRun
         db.LatestPipeline.RemoveRange(db.LatestPipeline);
         foreach (var row in latestPipelineAndRevisions.ToList())
         {
-            var def = db.DefinitionReference.SingleOrDefault(x => x.Id == row.Id && x.Revision == row.Revision);
+            var def = db.Definition.SingleOrDefault(x => x.Id == row.Id && x.Revision == row.Revision);
             if (def != null)
             {
                 db.LatestPipeline.Add(new LatestPipeline

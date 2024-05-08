@@ -21,7 +21,6 @@ public class PipelineYaml
     public string? Folder { get; set; }
 }
 
-
 public class PipelineYamlConfiguration
 {
     [JsonProperty("path")]
@@ -30,4 +29,14 @@ public class PipelineYamlConfiguration
     public Repository? Repository { get; set; }
     [JsonProperty("type")]
     public string? Type { get; set; }
+    [JsonProperty("variables")]
+    public Dictionary<string, PipelineYamlVariable>? Variables { get; set; }
+}
+
+public class PipelineYamlVariable
+{
+    [JsonProperty("value")]
+    public string? Value { get; set; }
+    [JsonProperty("isSecret")]
+    public bool? IsSecret { get; set; }
 }

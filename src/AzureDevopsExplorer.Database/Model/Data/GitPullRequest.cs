@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.WebApi;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AzureDevopsExplorer.Database.Model.Data;
@@ -113,3 +116,49 @@ public enum GitPullRequestMergeStrategy
 //    public ReferenceLinks Links { get; set; }
 //}
 
+
+public class GitCommitRef
+{
+    public string CommitId { get; set; }
+    public GitUserDate Author { get; set; }
+    public GitUserDate Committer { get; set; }
+    public string Comment { get; set; }
+    public bool CommentTruncated { get; set; }
+    public List<ChangeCount> ChangeCounts { get; set; }
+    public IEnumerable<GitChange> Changes { get; set; }
+    public IEnumerable<string> Parents { get; set; }
+    public string Url { get; set; }
+    public string RemoteUrl { get; set; }
+    public ReferenceLinks Links { get; set; }
+    public IList<GitStatus> Statuses { get; set; }
+    public IList<ResourceRef> WorkItems { get; set; }
+    public GitPushRef Push { get; set; }
+}
+
+
+
+public class ChangeCount
+{
+    public string CommitId { get; set; }
+    public VersionControlChangeType ChangeType { get; set; }
+    public int Count { get; set; }
+}
+
+public enum VersionControlChangeType
+{
+    None,
+    Add,
+    Edit,
+    Encoding,
+    Rename,
+    Delete,
+    Undelete,
+    Branch,
+    Merge,
+    Lock,
+    Rollback,
+    SourceRename,
+    TargetRename,
+    Property,
+    All,
+}

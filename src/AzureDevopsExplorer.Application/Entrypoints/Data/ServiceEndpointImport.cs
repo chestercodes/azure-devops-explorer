@@ -113,16 +113,16 @@ public class ServiceEndpointImport
             });
 
             var diffs = new List<string>();
-            var seComparison = compareLogic.Compare(currentServiceEndpoint, endPoint);
+            var seComparison = compareLogic.CompareSameType(currentServiceEndpoint, endPoint);
             if (seComparison.AreEqual == false) { diffs.Add(seComparison.DifferencesString); }
 
-            var sePrComparison = compareLogic.Compare(currentServiceEndpointProjectReference, apiProjectReferences);
+            var sePrComparison = compareLogic.CompareSameType(currentServiceEndpointProjectReference, apiProjectReferences);
             if (sePrComparison.AreEqual == false) { diffs.Add(sePrComparison.DifferencesString); }
 
-            var seApComparison = compareLogic.Compare(currentServiceEndpointAuthorizationParameter, apiAuthorizationParameters);
+            var seApComparison = compareLogic.CompareSameType(currentServiceEndpointAuthorizationParameter, apiAuthorizationParameters);
             if (seApComparison.AreEqual == false) { diffs.Add(seApComparison.DifferencesString); }
 
-            var seDataComparison = compareLogic.Compare(currentServiceEndpointData, apiData);
+            var seDataComparison = compareLogic.CompareSameType(currentServiceEndpointData, apiData);
             if (seDataComparison.AreEqual == false) { diffs.Add(seDataComparison.DifferencesString); }
 
             if (diffs.Count > 0)

@@ -55,7 +55,6 @@ public class BuildTests : IClassFixture<WiremockFixture>
                 BuildsAddFromStart = true,
                 BuildAddArtifacts = true,
                 BuildAddTimeline = true,
-                BuildFillImportTable = true,
             });
             using var db = new DataContext();
 
@@ -191,7 +190,7 @@ public class BuildTests : IClassFixture<WiremockFixture>
             var bt2 = buildTimeline2Builder.Value;
             Assert.NotNull(bt2);
 
-            var buildProject1 = db.TeamProjectReference.SingleOrDefault(x => x.Id == build1.ProjectId);
+            var buildProject1 = db.Project.SingleOrDefault(x => x.Id == build1.ProjectId);
             Assert.NotNull(buildProject1);
             Assert.Equal(b1.project.id, buildProject1.Id.ToString());
             Assert.Equal(b1.project.name, buildProject1.Name);
@@ -229,8 +228,7 @@ public class BuildTests : IClassFixture<WiremockFixture>
         using var db = new DataContext();
         foreach (var id in buildIds)
         {
-            db.TaskOrchestrationPlanReference.RemoveRange(db.TaskOrchestrationPlanReference.Where(x => x.BuildId == id));
-            db.ReferenceLink.RemoveRange(db.ReferenceLink.Where(x => x.SourceId == id.ToString() && x.SourceType == ReferenceLinkSourceType.Build));
+            db.BuildTaskOrchestrationPlanReference.RemoveRange(db.BuildTaskOrchestrationPlanReference.Where(x => x.BuildId == id));
             db.BuildTriggerInfo.RemoveRange(db.BuildTriggerInfo.Where(x => x.BuildId == id));
             db.BuildTemplateParameter.RemoveRange(db.BuildTemplateParameter.Where(x => x.BuildId == id));
             db.Build.RemoveRange(db.Build.Where(x => x.Id == id));

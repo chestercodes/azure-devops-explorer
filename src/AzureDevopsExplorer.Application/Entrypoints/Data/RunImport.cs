@@ -1,4 +1,5 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using Microsoft.VisualStudio.Services.WebApi;
@@ -6,13 +7,15 @@ using Microsoft.VisualStudio.Services.WebApi;
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class RunImport
 {
+    private readonly AzureDevopsApiOrgClient httpOrgClient;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly VssConnection connection;
     private readonly string projectName;
 
-    public RunImport(AzureDevopsApiProjectClient httpClient, VssConnection connection, string projectName)
+    public RunImport(AzureDevopsApiOrgClient httpOrgClient, VssConnection connection, string projectName)
     {
-        this.httpClient = httpClient;
+        this.httpClient = new AzureDevopsApiProjectClient(httpOrgClient.Info.AsProjectInfo(projectName));
+        this.httpOrgClient = httpOrgClient;
         this.connection = connection;
         this.projectName = projectName;
     }
@@ -51,6 +54,9 @@ public class RunImport
         var serviceEndpointImport = new ServiceEndpointImport(httpClient);
         await serviceEndpointImport.Run(config);
 
+        var secureFileImport = new SecureFileImport(httpClient);
+        await secureFileImport.Run(config);
+
         var variableGroupImport = new VariableGroupImport(httpClient);
         await variableGroupImport.Run(config);
 
@@ -60,8 +66,20 @@ public class RunImport
         var checkConfigurationImport = new CheckConfigurationImport(httpClient);
         await checkConfigurationImport.Run(config);
 
-        var identityImport = new IdentityImportCmd(connection, projectName);
+        var securityNamespaceImport = new SecurityNamespacesImport(httpOrgClient);
+        await securityNamespaceImport.Run(config);
+
+        var aclImport = new AccessControlListImport(httpOrgClient);
+        await aclImport.Run(config);
+
+        var identityImport = new IdentityImportCmd(httpOrgClient);
         await identityImport.Run(config);
 
+        var codeSearchImport = new CodeSearchImport(httpClient);
+        await codeSearchImport.Run(config);
+
+        // todo, find a better place?
+        var deriveResourcePermissions = new DeriveResourcePermissions();
+        await deriveResourcePermissions.Run();
     }
 }

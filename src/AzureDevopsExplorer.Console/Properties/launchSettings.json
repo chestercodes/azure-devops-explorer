@@ -1,9 +1,12 @@
 {
   "profiles": {
     "AzureDevopsExplorer.Console": {
+      "environmentVariables": {
+        "SET_IF_LOCAL_DEV": "something"
+      },
       "commandName": "Project",
-      "commandLineArgs": "--org xxxx --project-names xxx --data-actions builds-add-latest-default all-build-and-pipeline pipeline-environment-import check-configuration-import git-add-repositories service-endpoint-add-latest variable-group-add-latest"
-      //"commandLineArgs": "--org xxxx --project-names xxx --pipeline-ids 123 --data-actions builds-add-from-start "
+      "commandLineArgs": "--org xxx --project-names xxx --data-actions acl-import builds-add-latest-default build-add-artifacts build-add-timeline build-add-pipeline-run build-run-yaml-analysis code-search-import check-configuration-import git-add-repositories git-add-pull-requests identity-import pipeline-environment-import pipeline-run-import pipeline-run-template-import service-endpoint-add-latest secure-file-import security-namespace-import service-endpoint-add-history variable-group-add-latest"
+      //"commandLineArgs": "--org xxx --project-names xxx --pipeline-ids 123 --data-actions builds-add-from-start all-build-and-pipeline",
       //"commandLineArgs": "--load-to-neo4j "
     }
   }

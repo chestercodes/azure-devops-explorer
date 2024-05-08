@@ -63,7 +63,7 @@ public class PipelineEnvironmentImport
                 MaxDifferences = 100
             });
 
-            var comparison = compareLogic.Compare(currentPipelineEnvironment, envFromApi);
+            var comparison = compareLogic.CompareSameType(currentPipelineEnvironment, envFromApi);
             if (comparison.AreEqual == false)
             {
                 db.PipelineEnvironment.Remove(currentPipelineEnvironment);

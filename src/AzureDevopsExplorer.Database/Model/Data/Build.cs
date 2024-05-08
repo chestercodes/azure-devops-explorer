@@ -127,7 +127,6 @@ public class BuildController
     public bool Enabled { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime UpdatedDate { get; set; }
-    public List<ReferenceLink> Links { get; set; } = new();
     public int Id { get; set; }
     public string Name { get; set; }
     public string Url { get; set; }

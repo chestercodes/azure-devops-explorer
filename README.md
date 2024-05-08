@@ -16,20 +16,30 @@ the following are currently retrieved:
 - build expanded yaml - runs analysis to find used service connection and variable groups
 - git pull requests
 - git pull request reviewers
+- identities
 - pipeline
 - pipeline runs - with repository and pipeline artifacts used
 - pipeline checks
 - pipeline environments
+- secure files
 - service endpoints
 - service endpoints execution history
+- security namespaces
+- security namespaces actions
+- security acls
 - variable groups
 
 ## data future
 
 might eventually try to archive
 
-- security group info, groups etc
 - full audit
+
+## todo
+
+- in import change code, remove items that are in DB but are no longer returned from api
+- in import code, check where pagination is required
+- import permissions somehow
 
 ## how to use
 

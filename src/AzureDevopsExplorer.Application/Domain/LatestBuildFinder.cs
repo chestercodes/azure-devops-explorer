@@ -1,4 +1,5 @@
-﻿namespace AzureDevopsExplorer.Application.Entrypoints;
+﻿
+namespace AzureDevopsExporter.Application.Domain;
 
 public class LatestBuildFinder
 {

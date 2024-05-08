@@ -2,7 +2,7 @@
 
 namespace AzureDevopsExplorer.Database.Model.Data;
 
-public class TaskOrchestrationPlanReference
+public class BuildTaskOrchestrationPlanReference
 {
     [Key]
     public int Id { get; set; }

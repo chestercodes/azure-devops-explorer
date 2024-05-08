@@ -3,7 +3,7 @@
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.83.0" />
     <PackageReference Include="OneOf" Version="3.0.263" />
-    <PackageReference Include="YamlDotNet" Version="13.7.1" />
+    <PackageReference Include="YamlDotNet" Version="15.1.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,7 +2,7 @@
 
 namespace AzureDevopsExplorer.Database.Model.Data;
 
-public class TeamProjectReference
+public class Project
 {
     public Guid Id { get; set; }
     public string? Abbreviation { get; set; }

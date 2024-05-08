@@ -1,4 +1,5 @@
-﻿using Flurl.Http;
+﻿using AzureDevopsExplorer.AzureDevopsApi.Dtos;
+using Flurl.Http;
 using System.Text.Json;
 
 namespace AzureDevopsExplorer.AzureDevopsApi.Client;
@@ -104,6 +105,29 @@ public class AzureDevopsApiProjectClient
             {
                 return AzureDevopsApiError.FromEx(unEx);
             }
+        }
+    }
+
+    public async Task<AzureDevopsApiResult<SearchResponse>> PostSearch(string searchTerm)
+    {
+        try
+        {
+            var client = GetClient();
+            var url = $"{Info.SearchApiUrl}/search/codesearchresults?api-version=7.2-preview.1";
+            var req = client.Request(url);
+            req.WithHeader("Content-Type", "application/json");
+            var body = new SearchRequestBody(this.Info.ProjectName)
+            {
+                searchText = searchTerm
+            };
+            var bodyJson = JsonSerializer.Serialize(body);
+            var resp = await req.PostStringAsync(bodyJson);
+            var data = await resp.GetJsonAsync<SearchResponse>();
+            return data;
+        }
+        catch (FlurlHttpException ex)
+        {
+            return AzureDevopsApiError.FromEx(ex);
         }
     }
 }

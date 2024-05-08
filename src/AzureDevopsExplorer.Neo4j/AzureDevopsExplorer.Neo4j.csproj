@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Neo4j.Driver" Version="5.17.0" />
+    <PackageReference Include="Neo4j.Driver" Version="5.18.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureDevopsExplorer.Database\AzureDevopsExplorer.Database.csproj" />
   </ItemGroup>
 
 </Project>

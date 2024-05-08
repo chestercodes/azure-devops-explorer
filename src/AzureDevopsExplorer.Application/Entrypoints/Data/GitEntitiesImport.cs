@@ -151,12 +151,12 @@ public class GitEntitiesImport
             return;
         }
 
-        if (db.IdentityImport.Any(x => x.Id == id) == false)
+        if (db.IdentityImport.Any(x => x.IdentityId == id) == false)
         {
             addedIdentityIds.Add(id);
             db.IdentityImport.Add(new IdentityImport
             {
-                Id = id,
+                IdentityId = id,
                 LastImport = null
             });
         }

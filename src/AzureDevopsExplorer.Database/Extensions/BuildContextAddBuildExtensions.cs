@@ -22,20 +22,19 @@ public static class BuildContextAddBuildExtensions
             db.BuildRepository.Add(newRepository);
         }
 
-        var projectExists = db.TeamProjectReference.Any(x => x.Id == build.Project.Id);
+        var projectExists = db.Project.Any(x => x.Id == build.Project.Id);
         if (!projectExists)
         {
             var newProject = mapper.MapTeamProjectReference(build.Project);
-            db.TeamProjectReference.Add(newProject);
+            db.Project.Add(newProject);
         }
 
-        var definitionExists = db.DefinitionReference.Any(x => x.Id == build.Definition.Id && build.Definition.Revision == x.Revision);
+        var definitionExists = db.Definition.Any(x => x.Id == build.Definition.Id && build.Definition.Revision == x.Revision);
         if (!definitionExists)
         {
             var newDefinition = mapper.MapDefinitionReference(build.Definition);
-            db.DefinitionReference.Add(newDefinition);
+            db.Definition.Add(newDefinition);
         }
-        db.AddReferenceLinks(build.Links, build.Project.Id, ReferenceLinkSourceType.Build, build.Id.ToString());
 
         Guid? parseNullableGuid(string v)
         {
@@ -54,13 +53,13 @@ public static class BuildContextAddBuildExtensions
         newBuild.LastChangedById = parseNullableGuid(build.LastChangedBy?.Id);
         foreach (var plan in build.Plans)
         {
-            var newPlan = new TaskOrchestrationPlanReference
+            var newPlan = new BuildTaskOrchestrationPlanReference
             {
                 BuildId = build.Id,
                 OrchestrationType = plan.OrchestrationType,
                 PlanId = plan.PlanId,
             };
-            db.TaskOrchestrationPlanReference.Add(newPlan);
+            db.BuildTaskOrchestrationPlanReference.Add(newPlan);
         }
         db.Add(newBuild);
 

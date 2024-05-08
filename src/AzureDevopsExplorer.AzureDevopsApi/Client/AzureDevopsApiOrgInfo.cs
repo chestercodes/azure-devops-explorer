@@ -6,6 +6,7 @@ public class AzureDevopsApiOrgInfo
     public string OrgName { get; set; }
 
     public string ApiUrl => $"https://dev.azure.com/{OrgName}/_apis";
+    public string VsspsApiUrl => $"https://vssps.dev.azure.com/{OrgName}/_apis";
 
     public AzureDevopsApiProjectInfo AsProjectInfo(string projectName)
     {

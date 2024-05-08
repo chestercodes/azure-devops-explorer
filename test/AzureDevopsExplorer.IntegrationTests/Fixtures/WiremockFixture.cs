@@ -12,7 +12,7 @@ public class WiremockFixture : IDisposable
 
     public WiremockFixture()
     {
-        WireMock = WireMockServer.StartWithAdminInterface(port: 1080, ssl: true);
+        WireMock = WireMockServer.StartWithAdminInterface(port: 1080, useSSL: true);
 
         ServicePointManager.ServerCertificateValidationCallback += (a, b, c, d) => true;
 

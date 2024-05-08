@@ -50,7 +50,12 @@ public class CheckConfigurationImport
                 .ToList()
                 .Select(x => new CheckConfigurationsQueryResource(x.Id.ToString(), x.Name, "environment"))
                 .ToList();
-            allCheckResources = serviceConnectionIds.Union(variableGroupIds).Union(pipelineEnvironmentsIds).ToArray();
+            var secureFileIds = db.SecureFile
+                .Select(x => new { x.Id, x.Name })
+                .ToList()
+                .Select(x => new CheckConfigurationsQueryResource(x.Id.ToString(), x.Name, "securefile"))
+                .ToList();
+            allCheckResources = serviceConnectionIds.Union(variableGroupIds).Union(pipelineEnvironmentsIds).Union(secureFileIds).ToArray();
         }
 
         var queries = new AzureDevopsApiProjectQueries(httpClient);
@@ -84,9 +89,9 @@ public class CheckConfigurationImport
                 {
                     nameof(CheckConfiguration.LastImport)
                 },
-                MaxDifferences = 100
+                MaxDifferences = 1000
             });
-            var result = compareLogic.Compare(currentCheck, mapped);
+            var result = compareLogic.CompareSameType(currentCheck, mapped);
             if (!result.AreEqual)
             {
                 db.CheckConfiguration.Remove(currentCheck);

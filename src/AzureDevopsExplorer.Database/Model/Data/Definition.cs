@@ -6,7 +6,7 @@ namespace AzureDevopsExplorer.Database.Model.Data;
 
 // Microsoft.TeamFoundation.Build.WebApi.DefinitionReference
 [PrimaryKey(nameof(Id), nameof(Revision))]
-public class DefinitionReference
+public class Definition
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }

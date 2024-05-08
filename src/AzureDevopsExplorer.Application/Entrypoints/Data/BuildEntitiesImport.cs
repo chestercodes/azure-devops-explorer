@@ -22,7 +22,7 @@ public class BuildEntitiesImport
 
     public async Task Run(DataConfig config)
     {
-        if (config.BuildFillImportTable)
+        if (config.BuildAddArtifacts || config.BuildAddTimeline || config.BuildAddPipelineRun)
         {
             await RunAddMissingBuildsToImport();
         }

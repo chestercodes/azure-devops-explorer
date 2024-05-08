@@ -1,13 +1,10 @@
-﻿using Neo4j.Driver;
-using System.Xml.Linq;
+﻿namespace AzureDevopsExplorer.Neo4j;
 
-namespace AzureDevopsExplorer.Neo4j;
-
-public class Loader
+public class Neo4jLoader
 {
     private readonly IHaveDriver driver;
 
-    public Loader(IHaveDriver driver)
+    public Neo4jLoader(IHaveDriver driver)
     {
         this.driver = driver;
     }
@@ -49,12 +46,12 @@ public class Loader
                 foreach (var relationship in relationships)
                 {
                     var r = relationship;
-                    var sourceMatches = string.Join(" AND ", r.SourceMatches.Select(m => $"s.{m.MatchName} = \"{CleanValue(m.MatchValue)}\""));
-                    var destMatches = string.Join(" AND ", r.DestMatches.Select(m => $"d.{m.MatchName} = \"{CleanValue(m.MatchValue)}\""));
-                    var query = @$"
-MATCH (s:{r.SourceNodeType}),(d:{r.DestNodeType})
-WHERE {sourceMatches} AND {destMatches}
-CREATE (s)-[:{r.RelationshipName}]->(d)
+                    var sourceMatches = string.Join(" AND ", r.SourceMatches.Select(m => $" s.{m.MatchName} = \"{CleanValue(m.MatchValue)}\" "));
+                    var destMatches = string.Join(" AND ", r.DestMatches.Select(m => $" d.{m.MatchName} = \"{CleanValue(m.MatchValue)}\" "));
+                    var relationshipProperties = relationship.RelationshipProps.Count == 0
+                        ? ""
+                        : "{ " + string.Join(" , ", r.RelationshipProps.Select(p => $" {p.Key}: \"{CleanValue(p.Value)}\" ")) + " }";
+                    var query = @$"MATCH (s:{r.SourceNodeType}),(d:{r.DestNodeType}) WHERE {sourceMatches} AND {destMatches} CREATE (s)-[ :{r.RelationshipName} {relationshipProperties} ]->(d)
 ";
                     await tx.RunAsync(query);
                 }

@@ -37,6 +37,11 @@ public class AzureDevopsApiProjectQueries
         return await httpClient.GetJson<VariableGroup>($"distributedtask/variablegroups/{id}");
     }
 
+    public async Task<AzureDevopsApiResult<ListResponse<SecureFile>>> GetSecureFiles()
+    {
+        return await httpClient.GetJson<ListResponse<SecureFile>>($"distributedtask/securefiles");
+    }
+
     public async Task<AzureDevopsApiResult<ListResponse<ServiceEndpoint>>> GetServiceEndpoints()
     {
         return await httpClient.GetJson<ListResponse<ServiceEndpoint>>($"serviceendpoint/endpoints");
@@ -47,9 +52,23 @@ public class AzureDevopsApiProjectQueries
         return await httpClient.GetJson<ListResponse<PipelineEnvironment>>($"pipelines/environments");
     }
 
+    public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedServiceEndpoints(string serviceEndpointId)
+    {
+        return await httpClient.GetJson<PipelineResourceApproval>($"pipelines/pipelinePermissions/endpoint/{serviceEndpointId}");
+    }
+
+    public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedEnvironments(int environmentId)
+    {
+        return await httpClient.GetJson<PipelineResourceApproval>($"pipelines/pipelinePermissions/environment/{environmentId}");
+    }
+
     public record CheckConfigurationsQueryResource(string id, string name, string type);
     public async Task<AzureDevopsApiResult<ListResponse<ConfigurationCheck>>> CheckConfigurationsQuery(CheckConfigurationsQueryResource[] resources)
     {
         return await httpClient.PostJson<ListResponse<ConfigurationCheck>>($"pipelines/checks/queryconfigurations?$expand=settings&api-version=7.2-preview.1", resources);
+    }
+    public async Task<AzureDevopsApiResult<SearchResponse>> CodeSearch(string searchTerm)
+    {
+        return await httpClient.PostSearch(searchTerm);
     }
 }

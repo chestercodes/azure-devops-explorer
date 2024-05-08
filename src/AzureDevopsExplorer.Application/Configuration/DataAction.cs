@@ -24,11 +24,16 @@ public class ApplicationActions
                         BuildAddArtifacts = true,
                         BuildAddPipelineRun = true,
                         BuildAddTimeline = true,
-                        BuildFillImportTable = true,
                         BuildRunYamlAnalysis = true,
                         PipelineRunImport = true,
                         PipelineRunTemplateImport = true,
                     }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "acl-import",
+                    Info = "Import access control lists.",
+                    Config = new DataConfig { AccessControlListImport = true, SecurityNamespaceImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
@@ -46,25 +51,31 @@ public class ApplicationActions
                 {
                     Command = "build-add-artifacts",
                     Info = "Add build artifacts for builds.",
-                    Config = new DataConfig { BuildFillImportTable = true, BuildAddArtifacts = true }.ToApplicationConfig()
+                    Config = new DataConfig { BuildAddArtifacts = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
                     Command = "build-add-timeline",
                     Info = "Add build timeline for builds.",
-                    Config = new DataConfig { BuildFillImportTable = true, BuildAddTimeline = true }.ToApplicationConfig()
+                    Config = new DataConfig { BuildAddTimeline = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
                     Command = "build-add-pipeline-run",
                     Info = "Add pipeline run for builds.",
-                    Config = new DataConfig { BuildFillImportTable = true, BuildAddPipelineRun = true }.ToApplicationConfig()
+                    Config = new DataConfig { BuildAddPipelineRun = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
                     Command = "build-run-yaml-analysis",
                     Info = "Add analysis of expanded yaml file to get the used service connections and variable groups.",
                     Config = new DataConfig { BuildRunYamlAnalysis = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "code-search-import",
+                    Info = "Add code search keywords.",
+                    Config = new DataConfig { CodeSearchImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
@@ -113,6 +124,18 @@ public class ApplicationActions
                     Command = "service-endpoint-add-latest",
                     Info = "Add latest values for service endpoints.",
                     Config = new DataConfig { ServiceEndpointAddLatest = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "secure-file-import",
+                    Info = "Add latest values for secure files.",
+                    Config = new DataConfig { SecureFileImport = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "security-namespace-import",
+                    Info = "Add security namespaces and analyse the permissions.",
+                    Config = new DataConfig { SecurityNamespaceImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
