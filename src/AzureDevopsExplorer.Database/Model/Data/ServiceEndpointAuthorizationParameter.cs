@@ -7,7 +7,7 @@ namespace AzureDevopsExplorer.Database.Model.Data;
 public class ServiceEndpointAuthorizationParameter
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public string ServiceEndpointId { get; set; }
+    public Guid ServiceEndpointId { get; set; }
     public string? Name { get; set; }
     public string? Value { get; set; }
 }

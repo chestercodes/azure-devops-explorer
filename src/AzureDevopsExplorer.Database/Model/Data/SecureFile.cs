@@ -9,6 +9,7 @@ public class SecureFile
     public Guid Id { get; set; }
 
     public string? Name { get; set; }
+    public Guid ProjectId { get; set; }
     public Guid? CreatedById { get; set; }
     public DateTime? CreatedOn { get; set; }
     public Guid? ModifiedById { get; set; }

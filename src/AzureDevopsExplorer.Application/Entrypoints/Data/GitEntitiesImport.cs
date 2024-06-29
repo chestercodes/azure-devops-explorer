@@ -3,19 +3,23 @@ using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
+using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class GitEntitiesImport
 {
-    private readonly VssConnection connection;
-    private readonly string projectName;
+    private readonly ILogger logger;
+    private readonly Guid projectId;
     private readonly Mappers mapper;
+    FindPullRequestsAndEntities prQueries;
 
-    public GitEntitiesImport(VssConnection connection, string projectName)
+    public GitEntitiesImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.connection = connection;
-        this.projectName = projectName;
+        logger = dataContext.GetLogger();
+        this.projectId = dataContext.Project.ProjectId;
+        prQueries = new FindPullRequestsAndEntities(dataContext.VssConnection.Value, dataContext.Project.ProjectName);
         mapper = new Mappers();
     }
 
@@ -33,34 +37,64 @@ public class GitEntitiesImport
 
     public async Task RunAddGitRepositories()
     {
+        var importTime = DateTime.UtcNow;
         using var db = new DataContext();
-        Dictionary<Guid, string> existingReposById = new();
-        db.GitRepository
-            .Select(x => new { id = x.Id, summary = x.Url + x.Name + x.DefaultBranch + x.IsDisabled })
-            .ToList()
-            .ForEach(x =>
-            {
-                existingReposById[x.id] = x.summary;
-            });
 
-        var findQueries = new FindPullRequestsAndEntities(connection, projectName);
-        var repos = await findQueries.GetRepositories();
-        foreach (var repo in repos)
+        var repos = await prQueries.GetRepositories();
+        var reposFromApi = repos.Select(x =>
         {
-            if (existingReposById.ContainsKey(repo.Id))
-            {
-                var combined = repo.Url + repo.Name + repo.DefaultBranch + (repo.IsDisabled == null ? 0 : (repo.IsDisabled.Value ? 1 : 0));
-                var existingCombined = existingReposById[repo.Id];
-                if (combined != existingCombined)
+            var m = mapper.MapGitRepository(x);
+            m.LastImport = importTime;
+            return m;
+        });
+
+        var compareLogic = new CompareLogic(new ComparisonConfig
+        {
+            MembersToIgnore = new List<string>
                 {
-                    var existing = db.GitRepository.Single(x => x.Id == repo.Id);
-                    mapper.MapGitRepository(repo, existing);
+                    nameof(Database.Model.Data.GitRepository.LastImport),
+                    // size is not exciting enough to track changes
+                    nameof(Database.Model.Data.GitRepository.Size)
+                },
+            MaxDifferences = 1000
+        });
+
+        var existingReposForProject = db.GitRepository.Where(x => x.ProjectReferenceId == projectId).ToList();
+
+        foreach (var repo in reposFromApi)
+        {
+            var existingRepo = existingReposForProject.SingleOrDefault(x => x.Id == repo.Id);
+            if (existingRepo != null)
+            {
+                var comparison = compareLogic.CompareSameType(existingRepo, repo);
+                if (comparison.AreEqual == false)
+                {
+                    mapper.MapGitRepository(repo, existingRepo);
+
+                    db.GitRepositoryChange.Add(new GitRepositoryChange
+                    {
+                        RepositoryId = repo.Id,
+                        PreviousImport = existingRepo.LastImport,
+                        NextImport = importTime,
+                        Difference = comparison.DifferencesString
+                    });
+                }
+                else
+                {
+                    // has not changed
                 }
             }
             else
             {
-                var obj = mapper.MapGitRepository(repo);
-                db.GitRepository.Add(obj);
+                db.GitRepository.Add(repo);
+
+                db.GitRepositoryChange.Add(new GitRepositoryChange
+                {
+                    RepositoryId = repo.Id,
+                    PreviousImport = null,
+                    NextImport = importTime,
+                    Difference = $"First time or added repo {repo.Id}"
+                });
             }
         }
         await db.SaveChangesAsync();
@@ -73,12 +107,11 @@ public class GitEntitiesImport
             .Select(x => x.Id)
             .ToList();
 
-        var findQueries = new FindPullRequestsAndEntities(connection, projectName);
         List<Guid> addedIdentityIds = new();
 
         foreach (var repoId in existingRepoIds)
         {
-            var prs = await findQueries.GetPullRequests(repoId);
+            var prs = await prQueries.GetPullRequests(repoId);
             foreach (var pullRequest in prs)
             {
                 var existing = db.GitPullRequest.SingleOrDefault(x => x.PullRequestId == pullRequest.PullRequestId);

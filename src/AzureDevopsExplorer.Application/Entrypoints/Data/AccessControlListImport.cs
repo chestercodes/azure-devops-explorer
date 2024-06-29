@@ -1,18 +1,20 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.AzureDevopsApi;
-using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class AccessControlListImport
 {
-    private readonly AzureDevopsApiOrgClient httpClient;
+    private readonly AzureDevopsApiOrgQueries queries;
+    private readonly ILogger logger;
 
-    public AccessControlListImport(AzureDevopsApiOrgClient httpClient)
+    public AccessControlListImport(AzureDevopsOrganisationDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        this.queries = dataContext.Queries.Value;
+        logger = dataContext.GetLogger();
     }
 
     public async Task Run(DataConfig config)
@@ -41,7 +43,6 @@ public class AccessControlListImport
     {
         using var db = new DataContext();
 
-        var queries = new AzureDevopsApiOrgQueries(httpClient);
         var aclsResult = await queries.GetAclsForNamespace(namespaceId);
         if (aclsResult.IsT1)
         {

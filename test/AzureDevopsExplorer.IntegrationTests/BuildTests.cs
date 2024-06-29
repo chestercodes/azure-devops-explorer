@@ -6,6 +6,8 @@ using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
 using Microsoft.EntityFrameworkCore;
 using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.Application;
+using AzureDevopsExplorer.AzureDevopsApi;
 
 namespace AzureDevopsExplorer.IntegrationTests;
 
@@ -49,13 +51,21 @@ public class BuildTests : IClassFixture<WiremockFixture>
             CleanUpBuildTimelines(buildIds);
             CleanUpBuilds(buildIds);
 
-            var buildsEntrypoint = new RunImport(null, Connection.GetFakeConnection(), Constants.ProjectName);
-            await buildsEntrypoint.Run(new DataConfig
+            var dataContext = new AzureDevopsProjectDataContext(
+                new Application.Domain.AzureDevopsProject(Constants.ProjectName, Guid.Parse(Constants.ProjectId)),
+                new Lazy<Microsoft.VisualStudio.Services.WebApi.VssConnection>(Connection.GetFakeConnection()),
+                new Lazy<AzureDevopsApi.Client.AzureDevopsApiProjectClient>((AzureDevopsApi.Client.AzureDevopsApiProjectClient)null),
+                new Lazy<AzureDevopsApiProjectQueries>((AzureDevopsApiProjectQueries)null),
+                () => null
+                );
+            var importEntrypoint = new RunImport();
+            await importEntrypoint.RunProjectEntityImport(new DataConfig
             {
                 BuildsAddFromStart = true,
                 BuildAddArtifacts = true,
                 BuildAddTimeline = true,
-            });
+            },
+            dataContext);
             using var db = new DataContext();
 
             var b1 = buildJson1.Value;

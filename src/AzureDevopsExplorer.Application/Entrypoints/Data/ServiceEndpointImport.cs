@@ -7,16 +7,19 @@ using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class ServiceEndpointImport
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public ServiceEndpointImport(AzureDevopsApiProjectClient httpClient)
+    public ServiceEndpointImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 
@@ -34,6 +37,8 @@ public class ServiceEndpointImport
 
     public async Task AddServiceEndpoints()
     {
+        // TODO? figure out whether to remove values which are not in API response
+        // or whether we can't be sure that it's not being used by another project
         var queries = new AzureDevopsApiProjectQueries(httpClient);
         var serviceEndpointResult = await queries.GetServiceEndpoints();
         serviceEndpointResult.Switch(serviceEndpoints =>
@@ -56,10 +61,10 @@ public class ServiceEndpointImport
         endPoint.LastImport = importTime;
 
         var db = new DataContext();
-        var currentServiceEndpoint = db.ServiceEndpoint.SingleOrDefault(x => x.Id == se.Id);
-        var currentServiceEndpointData = db.ServiceEndpointData.Where(x => x.ServiceEndpointId == se.Id).ToList();
-        var currentServiceEndpointProjectReference = db.ServiceEndpointProjectReference.Where(x => x.ServiceEndpointId == se.Id).ToList();
-        var currentServiceEndpointAuthorizationParameter = db.ServiceEndpointAuthorizationParameter.Where(x => x.ServiceEndpointId == se.Id).ToList();
+        var currentServiceEndpoint = db.ServiceEndpoint.SingleOrDefault(x => x.Id == Guid.Parse(se.Id));
+        var currentServiceEndpointData = db.ServiceEndpointData.Where(x => x.ServiceEndpointId == Guid.Parse(se.Id)).ToList();
+        var currentServiceEndpointProjectReference = db.ServiceEndpointProjectReference.Where(x => x.ServiceEndpointId == Guid.Parse(se.Id)).ToList();
+        var currentServiceEndpointAuthorizationParameter = db.ServiceEndpointAuthorizationParameter.Where(x => x.ServiceEndpointId == Guid.Parse(se.Id)).ToList();
 
         if (se.Authorization == null || se.Authorization.Parameters == null)
         {
@@ -89,7 +94,7 @@ public class ServiceEndpointImport
             ServiceEndpointId = endPoint.Id,
             Name = x.Name,
             Description = x.Description,
-            ProjectReferenceId = x.ProjectReference.Id,
+            ProjectReferenceId = Guid.Parse(x.ProjectReference.Id),
             ProjectReferenceName = x.ProjectReference.Name,
         }).ToList();
 
@@ -178,7 +183,7 @@ public class ServiceEndpointImport
 
     public async Task AddExecutionHistory()
     {
-        List<string> serviceEndpointIds = new();
+        List<Guid> serviceEndpointIds = new();
 
         using (var db = new DataContext())
         {
@@ -191,7 +196,7 @@ public class ServiceEndpointImport
         }
     }
 
-    private async Task RunForServiceEndpoint(string serviceEndpointId)
+    private async Task RunForServiceEndpoint(Guid serviceEndpointId)
     {
         using var db = new DataContext();
 

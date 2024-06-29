@@ -4,7 +4,8 @@ public class AzureDevopsApiProjectInfo
 {
     public string? BearerToken { get; set; }
     //public string? PatToken { get; set; }
-    public string? ProjectName { get; set; }
+    public string ProjectName { get; set; }
+    public Guid ProjectId { get; set; }
     public string OrgName { get; set; }
 
     public string ApiUrl => $"https://dev.azure.com/{OrgName}/{ProjectName}/_apis";

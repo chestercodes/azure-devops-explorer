@@ -6,16 +6,19 @@ using AzureDevopsExplorer.Database.Extensions;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class PipelineImportCmd
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public PipelineImportCmd(AzureDevopsApiProjectClient httpClient)
+    public PipelineImportCmd(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 

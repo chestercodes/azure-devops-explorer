@@ -1,20 +1,22 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.AzureDevopsApi;
-using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class SecurityNamespacesImport
 {
-    private readonly AzureDevopsApiOrgClient httpClient;
+    private readonly AzureDevopsApiOrgQueries queries;
+    private readonly ILogger logger;
     private readonly Mappers mapper;
 
-    public SecurityNamespacesImport(AzureDevopsApiOrgClient httpClient)
+    public SecurityNamespacesImport(AzureDevopsOrganisationDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        this.queries = dataContext.Queries.Value;
+        logger = dataContext.GetLogger();
         mapper = new Mappers();
     }
 
@@ -28,7 +30,6 @@ public class SecurityNamespacesImport
 
     public async Task ImportSecurityNamespaces()
     {
-        var queries = new AzureDevopsApiOrgQueries(httpClient);
         var securityNamespacesResult = await queries.GetSecurityNamespaces();
         if (securityNamespacesResult.IsT1)
         {

@@ -91,6 +91,37 @@ public class ResourcePermissionsDeriver
                     );
                 }
             }
+
+            foreach (var projectResource in projectResources)
+            {
+                var (allow, deny) = descriptorAcls.EvaluateProject(projectResource);
+                foreach (var action in allow)
+                {
+                    permissions.Add(new DerivedPermission(
+                        resourceConfig.NamespaceId,
+                        descriptor,
+                        projectResource.ProjectId.ToString(),
+                        projectResource.ProjectId,
+                        AllowOrDeny.Allow,
+                        action.Name,
+                        action.DisplayName,
+                        action.Bit)
+                    );
+                }
+                foreach (var action in deny)
+                {
+                    permissions.Add(new DerivedPermission(
+                        resourceConfig.NamespaceId,
+                        descriptor,
+                        projectResource.ProjectId.ToString(),
+                        projectResource.ProjectId,
+                        AllowOrDeny.Deny,
+                        action.Name,
+                        action.DisplayName,
+                        action.Bit)
+                    );
+                }
+            }
         }
         AddToDb(db, resourceConfig, permissions);
     }

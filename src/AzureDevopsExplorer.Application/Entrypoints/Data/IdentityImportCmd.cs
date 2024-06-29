@@ -7,17 +7,20 @@ using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class IdentityImportCmd
 {
     private readonly AzureDevopsApiOrgQueries queries;
+    private readonly ILogger logger;
     private readonly Mappers mapper = new Mappers();
 
-    public IdentityImportCmd(AzureDevopsApiOrgClient httpClient)
+    public IdentityImportCmd(AzureDevopsOrganisationDataContext dataContext)
     {
-        this.queries = new AzureDevopsApiOrgQueries(httpClient);
+        this.queries = dataContext.Queries.Value;
+        logger = dataContext.GetLogger();
     }
 
     public async Task Run(DataConfig config)

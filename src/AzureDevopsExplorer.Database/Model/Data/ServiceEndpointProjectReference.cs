@@ -7,8 +7,8 @@ namespace AzureDevopsExplorer.Database.Model.Data;
 public class ServiceEndpointProjectReference
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public string ServiceEndpointId { get; set; }
-    public string? ProjectReferenceId { get; set; }
+    public Guid ServiceEndpointId { get; set; }
+    public Guid ProjectReferenceId { get; set; }
     public string? ProjectReferenceName { get; set; }
     public string? Name { get; set; }
     public string? Description { get; set; }

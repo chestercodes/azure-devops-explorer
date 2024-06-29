@@ -1,13 +1,21 @@
-﻿namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
+﻿using AzureDevopsExplorer.Application.Configuration;
+
+namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 
 public class RunEvaluate
 {
-    public async Task Run()
+    public async Task Run(ProcessConfig processConfig)
     {
-        var latestPipelineAndRun = new LatestPipelineAndRun();
-        await latestPipelineAndRun.Run();
+        if (processConfig.UpdateLatestPipelineAndRun)
+        {
+            var latestPipelineAndRun = new LatestPipelineAndRun();
+            await latestPipelineAndRun.Run();
+        }
 
-        var deriveResourcePermissions = new DeriveResourcePermissions();
-        await deriveResourcePermissions.Run();
+        if (processConfig.DerivePermissions)
+        {
+            var deriveResourcePermissions = new DeriveResourcePermissions();
+            await deriveResourcePermissions.Run();
+        }
     }
 }

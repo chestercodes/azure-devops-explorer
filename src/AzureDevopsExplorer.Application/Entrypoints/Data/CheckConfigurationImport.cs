@@ -1,22 +1,26 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Client;
+using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using static AzureDevopsExplorer.AzureDevopsApi.AzureDevopsApiProjectQueries;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class CheckConfigurationImport
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public CheckConfigurationImport(AzureDevopsApiProjectClient httpClient)
+    public CheckConfigurationImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 
@@ -38,7 +42,7 @@ public class CheckConfigurationImport
                 .Where(x => x.Type == "azurerm")
                 .Select(x => new { x.Id, x.Name })
                 .ToList()
-                .Select(x => new CheckConfigurationsQueryResource(x.Id, x.Name, "endpoint"))
+                .Select(x => new CheckConfigurationsQueryResource(x.Id.ToString(), x.Name, "endpoint"))
                 .ToList();
             var variableGroupIds = db.VariableGroup
                 .Select(x => new { x.Id, x.Name })
@@ -59,20 +63,57 @@ public class CheckConfigurationImport
         }
 
         var queries = new AzureDevopsApiProjectQueries(httpClient);
+        // TODO? probably should chunk this call and response handling
         var result = await queries.CheckConfigurationsQuery(allCheckResources);
+        if (result.IsT1)
+        {
+            Console.WriteLine(result.AsT1.AsError);
+            return;
+        }
+
         var lastImport = DateTime.UtcNow;
-        result.Switch(
-            checkConfigs =>
+        var checkConfigs = result.AsT0;
+
+        var existingIds = new List<int>();
+        using (var db = new DataContext())
+        {
+            existingIds = db.CheckConfiguration.Select(x => x.Id).ToList();
+        }
+
+        foreach (var check in checkConfigs.Value)
+        {
+            RunAddOrUpdate(check, lastImport);
+        }
+
+        await RemoveExistingNotPresentInApiResponse(lastImport, checkConfigs, existingIds);
+    }
+
+    private static async Task RemoveExistingNotPresentInApiResponse(DateTime lastImport, ListResponse<ConfigurationCheck> checkConfigs, List<int> existingIds)
+    {
+        var idsFromApi = checkConfigs.Value.Select(x => x.Id).ToList();
+        var removed = existingIds.Except(idsFromApi);
+        if (removed.Any())
+        {
+            using (var db = new DataContext())
             {
-                foreach (var check in checkConfigs.Value)
+                var toRemove = db.CheckConfiguration.Where(x => removed.Contains(x.Id)).ToList();
+                db.CheckConfigurationChange.AddRange(toRemove.Select(x =>
                 {
-                    RunAddOrUpdate(check, lastImport);
-                }
-            },
-            err =>
-            {
-                Console.WriteLine(err.AsError);
-            });
+                    return new CheckConfigurationChange
+                    {
+                        CheckId = x.Id,
+                        Difference = $"Removed",
+                        PreviousImport = x.LastImport,
+                        NextImport = lastImport,
+                        ResourceId = x.ResourceId,
+                        ResourceName = x.ResourceName,
+                        ResourceType = x.ResourceType
+                    };
+                }));
+                db.CheckConfiguration.RemoveRange(toRemove);
+                await db.SaveChangesAsync();
+            }
+        }
     }
 
     private void RunAddOrUpdate(AzureDevopsApi.Dtos.ConfigurationCheck check, DateTime lastImport)

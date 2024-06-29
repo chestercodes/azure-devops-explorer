@@ -15,19 +15,19 @@ public class AccessControlTokenParser
         IgnoreTokenPatterns = ignoreTokenPatterns;
         if (organisationPattern != null)
         {
-            OrganisationPattern = new Regex($"^{organisationPattern}$");
+            OrganisationPattern = new Regex($"^{organisationPattern}$", RegexOptions.IgnoreCase);
         }
         if (projectPattern != null)
         {
-            ProjectPattern = new Regex($"^{projectPattern}$");
+            ProjectPattern = new Regex($"^{projectPattern}$", RegexOptions.IgnoreCase);
         }
         if (projectAndObjectPattern != null)
         {
-            ProjectAndObjectPattern = new Regex($"^{projectAndObjectPattern}$");
+            ProjectAndObjectPattern = new Regex($"^{projectAndObjectPattern}$", RegexOptions.IgnoreCase);
         }
         if (collectionObjectPattern != null)
         {
-            CollectionObjectPattern = new Regex($"^{collectionObjectPattern}$");
+            CollectionObjectPattern = new Regex($"^{collectionObjectPattern}$", RegexOptions.IgnoreCase);
         }
     }
 

@@ -3,18 +3,21 @@ using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Commands;
 using AzureDevopsExplorer.Database.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class BuildsAllCompletedFromStart
 {
+    private readonly ILogger logger;
     private readonly VssConnection connection;
     private readonly string projectName;
 
-    public BuildsAllCompletedFromStart(VssConnection connection, string projectName)
+    public BuildsAllCompletedFromStart(AzureDevopsProjectDataContext dataContext)
     {
-        this.connection = connection;
-        this.projectName = projectName;
+        logger = dataContext.GetLogger();
+        this.connection = dataContext.VssConnection.Value;
+        this.projectName = dataContext.Project.ProjectName;
     }
 
     public async Task Run(DataConfig config)

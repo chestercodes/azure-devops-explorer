@@ -2,6 +2,7 @@
 using AzureDevopsExplorer.Application.Domain;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using OneOf;
@@ -11,13 +12,15 @@ using System.Text;
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class BuildYamlAnalysis
 {
+    private readonly ILogger logger;
     private readonly VssConnection vssConnection;
     private readonly string projectName;
 
-    public BuildYamlAnalysis(VssConnection vssConnection, string projectName)
+    public BuildYamlAnalysis(AzureDevopsProjectDataContext dataContext)
     {
-        this.vssConnection = vssConnection;
-        this.projectName = projectName;
+        logger = dataContext.GetLogger();
+        this.vssConnection = dataContext.VssConnection.Value;
+        this.projectName = dataContext.Project.ProjectName;
     }
 
     public async Task Run(DataConfig config)

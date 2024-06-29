@@ -5,7 +5,7 @@ namespace AzureDevopsExplorer.AzureDevopsApi.Dtos;
 public class PipelineResourceApproval
 {
     [JsonProperty("allPipelines")]
-    public PipelineResourceApprovalAllpipelines? AllPipelines { get; set; }
+    public PipelineResourceApprovalAllPipelines? AllPipelines { get; set; }
     [JsonProperty("resource")]
     public PipelineResourceApprovalResource? Resource { get; set; }
     [JsonProperty("pipelines")]
@@ -44,7 +44,7 @@ public class PipelineResourceApprovalAuthorizedby
     public string Descriptor { get; set; }
 }
 
-public class PipelineResourceApprovalAllpipelines
+public class PipelineResourceApprovalAllPipelines
 {
     [JsonProperty("authorized")]
     public bool Authorized { get; set; }

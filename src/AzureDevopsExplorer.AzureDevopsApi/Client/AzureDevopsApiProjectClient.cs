@@ -1,5 +1,7 @@
 ﻿using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using Flurl.Http;
+using Microsoft.Extensions.Logging;
+using Polly.Wrap;
 using System.Text.Json;
 
 namespace AzureDevopsExplorer.AzureDevopsApi.Client;
@@ -8,9 +10,14 @@ public class AzureDevopsApiProjectClient
 {
     public AzureDevopsApiProjectInfo Info { get; private set; }
 
-    public AzureDevopsApiProjectClient(AzureDevopsApiProjectInfo azureDevopsApiInfo)
+    private readonly ILogger logger;
+    private readonly AsyncPolicyWrap policy;
+
+    public AzureDevopsApiProjectClient(AzureDevopsApiProjectInfo azureDevopsApiInfo, Func<ILogger> getLogger)
     {
         this.Info = azureDevopsApiInfo;
+        logger = getLogger();
+        policy = AzureDevopsApiRetry.GetPolicy(logger);
     }
 
     public FlurlClient GetClient()
@@ -32,21 +39,12 @@ public class AzureDevopsApiProjectClient
             var client = GetClient();
             var url = $"{Info.ApiUrl}/{path}";
             var req = client.Request(url);
-            var data = await req.GetJsonAsync<TJson>();
+            var data = await policy.ExecuteAsync(() => req.GetJsonAsync<TJson>());
             return data;
         }
-        catch (FlurlHttpException ex)
+        catch (Exception unEx)
         {
-            try
-            {
-                var err = await ex.GetResponseJsonAsync<ErrorResponse>();
-                return AzureDevopsApiError.FromError(err, ex);
-            }
-            catch (Exception unEx)
-            {
-                var thing = await ex.Call.Response.GetStringAsync();
-                return AzureDevopsApiError.FromEx(unEx);
-            }
+            return AzureDevopsApiError.FromEx(unEx);
         }
     }
 
@@ -58,27 +56,20 @@ public class AzureDevopsApiProjectClient
             var url = $"{Info.ApiUrl}/{path}";
             var req = client.Request(url);
             req.WithHeader("Content-Type", "application/json");
-
-            //var data = await req.PostJsonAsync<TJson>(body);
-
             var bodyJson = JsonSerializer.Serialize(body);
-            var resp = await req.PostStringAsync(bodyJson);
-            var data = await resp.GetJsonAsync<TJson>();
+
+            var data = await policy.ExecuteAsync(
+                async () =>
+                {
+                    var resp = await req.PostStringAsync(bodyJson);
+                    return await resp.GetJsonAsync<TJson>();
+                });
 
             return data;
         }
-        catch (FlurlHttpException ex)
+        catch (Exception unEx)
         {
-            try
-            {
-                var err = await ex.GetResponseJsonAsync<ErrorResponse>();
-                return AzureDevopsApiError.FromError(err, ex);
-            }
-            catch (Exception unEx)
-            {
-                var thing = await ex.Call.Response.GetStringAsync();
-                return AzureDevopsApiError.FromEx(unEx);
-            }
+            return AzureDevopsApiError.FromEx(unEx);
         }
     }
 
@@ -90,21 +81,18 @@ public class AzureDevopsApiProjectClient
             // GET https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/items?path={path}&api-version=6.1-preview.1
             var url = $"{Info.ApiUrl}/git/repositories/{repositoryId}/items?path={path}&download=true";
             var req = client.Request(url);
-            var res = await req.GetAsync();
-            var content = await res.ResponseMessage.Content.ReadAsStringAsync();
-            return content;
+            var data = await policy.ExecuteAsync(async () =>
+            {
+                var res = await req.GetAsync();
+                var content = await res.ResponseMessage.Content.ReadAsStringAsync();
+                return content;
+            });
+
+            return data;
         }
-        catch (FlurlHttpException ex)
+        catch (Exception unEx)
         {
-            try
-            {
-                var err = await ex.GetResponseJsonAsync<ErrorResponse>();
-                return AzureDevopsApiError.FromError(err, ex);
-            }
-            catch (Exception unEx)
-            {
-                return AzureDevopsApiError.FromEx(unEx);
-            }
+            return AzureDevopsApiError.FromEx(unEx);
         }
     }
 
@@ -121,8 +109,14 @@ public class AzureDevopsApiProjectClient
                 searchText = searchTerm
             };
             var bodyJson = JsonSerializer.Serialize(body);
-            var resp = await req.PostStringAsync(bodyJson);
-            var data = await resp.GetJsonAsync<SearchResponse>();
+
+            var data = await policy.ExecuteAsync(async () =>
+            {
+                var resp = await req.PostStringAsync(bodyJson);
+                var data = await resp.GetJsonAsync<SearchResponse>();
+                return data;
+            });
+
             return data;
         }
         catch (FlurlHttpException ex)

@@ -5,16 +5,19 @@ using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class VariableGroupImport
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public VariableGroupImport(AzureDevopsApiProjectClient httpClient)
+    public VariableGroupImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 
@@ -28,6 +31,8 @@ public class VariableGroupImport
 
     public async Task ImportVariableGroups()
     {
+        // TODO? figure out whether to remove values which are not in API response
+        // or whether we can't be sure that it's not being used by another project
         var queries = new AzureDevopsApiProjectQueries(httpClient);
         var variableGroupResult = await queries.GetVariableGroups();
         if (variableGroupResult.IsT1)

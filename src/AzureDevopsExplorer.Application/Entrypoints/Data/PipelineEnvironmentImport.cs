@@ -1,20 +1,24 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Client;
+using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class PipelineEnvironmentImport
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public PipelineEnvironmentImport(AzureDevopsApiProjectClient httpClient)
+    public PipelineEnvironmentImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 
@@ -30,18 +34,52 @@ public class PipelineEnvironmentImport
     {
         var queries = new AzureDevopsApiProjectQueries(httpClient);
         var pipelineEnvironmentResult = await queries.GetPipelineEnvironments();
-        pipelineEnvironmentResult.Switch(pipelineEnvironments =>
+        if (pipelineEnvironmentResult.IsT1)
         {
-            var importTime = DateTime.UtcNow;
-            foreach (var pe in pipelineEnvironments.Value)
+            Console.WriteLine(pipelineEnvironmentResult.AsT1.AsError);
+            return;
+        }
+
+        var existingIds = new List<int>();
+        using (var db = new DataContext())
+        {
+            existingIds = db.PipelineEnvironment.Select(x => x.Id).ToList();
+        }
+
+        var pipelineEnvironments = pipelineEnvironmentResult.AsT0;
+        var importTime = DateTime.UtcNow;
+        foreach (var pe in pipelineEnvironments.Value)
+        {
+            AddOrUpdatePipelineEnvironment(pe, importTime);
+        }
+
+        await RemoveExistingNotPresentInApiResponse(existingIds, pipelineEnvironments, importTime);
+    }
+
+    private static async Task RemoveExistingNotPresentInApiResponse(List<int> existingIds, ListResponse<AzureDevopsApi.Dtos.PipelineEnvironment> pipelineEnvironments, DateTime importTime)
+    {
+        var idsFromApi = pipelineEnvironments.Value.Select(x => x.Id).ToList();
+        var removed = existingIds.Except(idsFromApi);
+        if (removed.Any())
+        {
+            using (var db = new DataContext())
             {
-                AddOrUpdatePipelineEnvironment(pe, importTime);
+                var toRemove = db.PipelineEnvironment.Where(x => removed.Contains(x.Id)).ToList();
+                db.PipelineEnvironmentChange.AddRange(toRemove.Select(x =>
+                {
+                    return new PipelineEnvironmentChange
+                    {
+                        PipelineEnvironmentId = x.Id,
+                        Difference = $"Removed",
+                        PreviousImport = x.LastImport,
+                        NextImport = importTime
+                    };
+                }));
+                db.PipelineEnvironment.RemoveRange(toRemove);
+                await db.SaveChangesAsync();
             }
-        },
-        err =>
-        {
-            Console.WriteLine(err.AsError);
-        });
+
+        }
     }
 
     private void AddOrUpdatePipelineEnvironment(AzureDevopsApi.Dtos.PipelineEnvironment pe, DateTime importTime)
@@ -60,7 +98,7 @@ public class PipelineEnvironmentImport
                 {
                     nameof(Database.Model.Data.PipelineEnvironment.LastImport)
                 },
-                MaxDifferences = 100
+                MaxDifferences = 1000
             });
 
             var comparison = compareLogic.CompareSameType(currentPipelineEnvironment, envFromApi);

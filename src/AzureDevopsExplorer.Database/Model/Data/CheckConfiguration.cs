@@ -19,7 +19,7 @@ public class CheckConfiguration
     public string? TypeId { get; set; }
     public string? TypeName { get; set; }
     public string? Url { get; set; }
-    public string? ResourceType { get; set; }
-    public string? ResourceId { get; set; }
-    public string? ResourceName { get; set; }
+    public string ResourceType { get; set; }
+    public string ResourceId { get; set; }
+    public string ResourceName { get; set; }
 }

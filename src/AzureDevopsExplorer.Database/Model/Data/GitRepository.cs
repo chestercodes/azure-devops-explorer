@@ -17,4 +17,6 @@ public class GitRepository
     public Guid? ParentRepositoryId { get; set; }
     //public ReferenceLinks Links { get; set; }
     public bool? IsDisabled { get; set; }
+
+    public DateTime? LastImport { get; set; }
 }

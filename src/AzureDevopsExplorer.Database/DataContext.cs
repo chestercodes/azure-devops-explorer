@@ -2,11 +2,16 @@
 
 using Microsoft.EntityFrameworkCore;
 using AzureDevopsExplorer.Database.Model.Data;
+using AzureDevopsExplorer.Database.Model.Graph;
 
 public class DataContext : DbContext
 {
     public DbSet<AccessControl> AccessControl { get; set; }
     public DbSet<AccessControlChange> AccessControlChange { get; set; }
+    public DbSet<AgentPool> AgentPool { get; set; }
+    public DbSet<AgentPoolChange> AgentPoolChange { get; set; }
+    public DbSet<AuditLog> AuditLog { get; set; }
+    public DbSet<AuditLogImport> AuditLogImport { get; set; }
     public DbSet<Build> Build { get; set; }
     public DbSet<BuildArtifact> BuildArtifact { get; set; }
     public DbSet<BuildArtifactProperty> BuildArtifactProperty { get; set; }
@@ -37,6 +42,7 @@ public class DataContext : DbContext
     public DbSet<GitPullRequest> GitPullRequest { get; set; }
     public DbSet<GitPullRequestReview> GitPullRequestReview { get; set; }
     public DbSet<GitRepository> GitRepository { get; set; }
+    public DbSet<GitRepositoryChange> GitRepositoryChange { get; set; }
     public DbSet<Identity> Identity { get; set; }
     //public DbSet<IdentityProperty> IdentityProperty { get; set; }
     public DbSet<IdentityImport> IdentityImport { get; set; }
@@ -49,6 +55,7 @@ public class DataContext : DbContext
     public DbSet<LatestPipelineTemplateImport> LatestPipelineTemplateImport { get; set; }
     public DbSet<PipelineEnvironment> PipelineEnvironment { get; set; }
     public DbSet<PipelineEnvironmentChange> PipelineEnvironmentChange { get; set; }
+    public DbSet<PipelineEnvironmentPipelinePermission> PipelineEnvironmentPipelinePermission { get; set; }
     public DbSet<PipelineImport> PipelineImport { get; set; }
     public DbSet<PipelineRun> PipelineRun { get; set; }
     public DbSet<PipelineRunPipelineInfo> PipelineRunPipelineInfo { get; set; }
@@ -68,13 +75,20 @@ public class DataContext : DbContext
     public DbSet<ServiceEndpointData> ServiceEndpointData { get; set; }
     public DbSet<ServiceEndpointProjectReference> ServiceEndpointProjectReference { get; set; }
     public DbSet<ServiceEndpointExecutionHistory> ServiceEndpointExecutionHistory { get; set; }
+    public DbSet<ServiceEndpointPipelinePermission> ServiceEndpointPipelinePermission { get; set; }
     public DbSet<VariableGroup> VariableGroup { get; set; }
     public DbSet<VariableGroupChange> VariableGroupChange { get; set; }
+    public DbSet<VariableGroupPipelinePermission> VariableGroupPipelinePermission { get; set; }
     public DbSet<VariableGroupProjectReference> VariableGroupProjectReference { get; set; }
     public DbSet<VariableGroupVariable> VariableGroupVariable { get; set; }
 
     public DbSet<ImportState> ImportState { get; set; }
     public DbSet<ImportError> ImportError { get; set; }
+
+    // graph
+    public DbSet<EntraApplication> EntraApplication { get; set; }
+    public DbSet<GraphAppRole> GraphAppRole { get; set; }
+    public DbSet<EntraGroup> EntraGroup { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
@@ -84,6 +98,9 @@ public class DataContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AuditLogImport>()
+            .Property(x => x.Status)
+            .AddEnumMaxLengthAndConversion();
         modelBuilder.Entity<Build>()
             .Property(x => x.Priority)
             .AddEnumMaxLengthAndConversion();

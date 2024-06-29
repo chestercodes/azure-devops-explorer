@@ -7,23 +7,26 @@ using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Data;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Net;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class SecureFileImport
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly Mappers mapper;
 
-    public SecureFileImport(AzureDevopsApiProjectClient httpClient)
+    public SecureFileImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
         mapper = new Mappers();
     }
 
     public async Task Run(DataConfig config)
     {
-        if (config.SecurityNamespaceImport)
+        if (config.SecureFileImport)
         {
             await ImportSecureFiles();
         }
@@ -36,6 +39,13 @@ public class SecureFileImport
         if (secureFilesResult.IsT1)
         {
             Console.WriteLine(secureFilesResult.AsT1.AsError);
+            return;
+        }
+
+        var existingIds = new List<Guid>();
+        using (var db = new DataContext())
+        {
+            existingIds = db.SecureFile.Where(x => x.ProjectId == httpClient.Info.ProjectId).Select(x => x.Id).ToList();
         }
 
         var secureFiles = secureFilesResult.AsT0;
@@ -45,6 +55,8 @@ public class SecureFileImport
         {
             await AddSecureFile(secureFile, importTime);
         }
+
+        await RemoveExistingNotPresentInApiResponse(existingIds, secureFiles, importTime);
     }
 
     private async Task AddSecureFile(AzureDevopsApi.Dtos.SecureFile secureFile, DateTime importTime)
@@ -52,6 +64,7 @@ public class SecureFileImport
         using var db = new DataContext();
 
         var secureFileFromApi = mapper.MapSecureFile(secureFile);
+        secureFileFromApi.ProjectId = httpClient.Info.ProjectId;
         var secureFilePropertiesFromApi = secureFile.Properties.Select(x =>
             {
                 return new SecureFileProperty
@@ -113,5 +126,31 @@ public class SecureFileImport
 
         db.SaveChanges();
         return;
+    }
+
+    private static async Task RemoveExistingNotPresentInApiResponse(List<Guid> existingIds, ListResponse<AzureDevopsApi.Dtos.SecureFile> secureFiles, DateTime importTime)
+    {
+        var idsFromApi = secureFiles.Value.Select(x => x.Id).ToList();
+        var removed = existingIds.Except(idsFromApi);
+        if (removed.Any())
+        {
+            using (var db = new DataContext())
+            {
+                var toRemove = db.SecureFile.Where(x => removed.Contains(x.Id)).ToList();
+                db.SecureFileChange.AddRange(toRemove.Select(x =>
+                {
+                    return new SecureFileChange
+                    {
+                        SecureFileId = x.Id,
+                        Difference = $"Removed",
+                        PreviousImport = x.LastImport,
+                        NextImport = importTime
+                    };
+                }));
+                db.SecureFile.RemoveRange(toRemove);
+                await db.SaveChangesAsync();
+            }
+
+        }
     }
 }

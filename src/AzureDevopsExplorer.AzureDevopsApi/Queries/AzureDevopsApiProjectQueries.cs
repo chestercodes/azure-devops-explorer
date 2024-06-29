@@ -52,7 +52,7 @@ public class AzureDevopsApiProjectQueries
         return await httpClient.GetJson<ListResponse<PipelineEnvironment>>($"pipelines/environments");
     }
 
-    public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedServiceEndpoints(string serviceEndpointId)
+    public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedServiceEndpoints(Guid serviceEndpointId)
     {
         return await httpClient.GetJson<PipelineResourceApproval>($"pipelines/pipelinePermissions/endpoint/{serviceEndpointId}");
     }
@@ -60,6 +60,11 @@ public class AzureDevopsApiProjectQueries
     public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedEnvironments(int environmentId)
     {
         return await httpClient.GetJson<PipelineResourceApproval>($"pipelines/pipelinePermissions/environment/{environmentId}");
+    }
+
+    public async Task<AzureDevopsApiResult<PipelineResourceApproval>> GetPipelineApprovedVariableGroup(int variableGroupId)
+    {
+        return await httpClient.GetJson<PipelineResourceApproval>($"pipelines/pipelinePermissions/variablegroup/{variableGroupId}");
     }
 
     public record CheckConfigurationsQueryResource(string id, string name, string type);

@@ -5,21 +5,24 @@ using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Extensions;
 using AzureDevopsExporter.Application.Domain;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class BuildsLatestDefaultFromPipeline
 {
+    private readonly ILogger logger;
     private readonly VssConnection vssConnection;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly string projectName;
 
-    public BuildsLatestDefaultFromPipeline(VssConnection vssConnection, AzureDevopsApiProjectClient httpClient, string projectName)
+    public BuildsLatestDefaultFromPipeline(AzureDevopsProjectDataContext dataContext)
     {
-        this.vssConnection = vssConnection;
-        this.httpClient = httpClient;
-        this.projectName = projectName;
+        logger = dataContext.GetLogger();
+        this.vssConnection = dataContext.VssConnection.Value;
+        this.httpClient = dataContext.HttpClient.Value;
+        this.projectName = dataContext.Project.ProjectName;
     }
 
     public async Task Run(DataConfig config)

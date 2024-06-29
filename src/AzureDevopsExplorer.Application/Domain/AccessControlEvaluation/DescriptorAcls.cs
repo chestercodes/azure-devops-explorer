@@ -72,6 +72,28 @@ public class DescriptorAcls
         return (ToPermissionActions(allowActionBits), ToPermissionActions(denyActionBits));
     }
 
+    public (List<NamespacePermissionAction> Allow, List<NamespacePermissionAction> Deny) EvaluateProject(ProjectResource resource)
+    {
+        var orgAcls = OrganisationLevel.Where(x => x.Acl.InheritPermissions).ToList();
+        var projectAcls = ProjectLevel.Where(x => x.Item1.ProjectId == resource.ProjectId).ToList();
+
+        var allowActionBits = new HashSet<int>();
+        var denyActionBits = new HashSet<int>();
+
+        AddAclsToAllowAndDeny(allowActionBits, denyActionBits, orgAcls);
+        AddAclsToAllowAndDeny(allowActionBits, denyActionBits, projectAcls);
+
+        foreach (var denyActionBit in denyActionBits)
+        {
+            // deny always overrides allow, if any deny then remove allow
+            if (allowActionBits.Contains(denyActionBit))
+            {
+                allowActionBits.Remove(denyActionBit);
+            }
+        }
+        return (ToPermissionActions(allowActionBits), ToPermissionActions(denyActionBits));
+    }
+
     private List<NamespacePermissionAction> ToPermissionActions(HashSet<int> actionBits)
     {
         return actionBits

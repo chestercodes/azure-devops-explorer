@@ -37,8 +37,8 @@ public static class BuildContextImportStateExtensions
         db.SaveChanges();
     }
 
-    private static Func<string, string> GetServiceConnectionExecutionHistoryLatestId = serviceConnectionId => $"ServiceConnectionExecutionHistoryLatestId_{serviceConnectionId}";
-    public static int? GetServiceConnectionExecutionHistoryLatestIdValue(this DataContext db, string serviceConnectionId)
+    private static Func<Guid, string> GetServiceConnectionExecutionHistoryLatestId = serviceConnectionId => $"ServiceConnectionExecutionHistoryLatestId_{serviceConnectionId}";
+    public static int? GetServiceConnectionExecutionHistoryLatestIdValue(this DataContext db, Guid serviceConnectionId)
     {
         var id = GetServiceConnectionExecutionHistoryLatestId(serviceConnectionId);
         var v = db.ImportState.SingleOrDefault(x => x.Id == id);
@@ -49,7 +49,7 @@ public static class BuildContextImportStateExtensions
         return int.Parse(v.Value!);
     }
 
-    public static void SetServiceConnectionExecutionHistoryLatestIdValue(this DataContext db, string serviceConnectionId, int historyId)
+    public static void SetServiceConnectionExecutionHistoryLatestIdValue(this DataContext db, Guid serviceConnectionId, int historyId)
     {
         var id = GetServiceConnectionExecutionHistoryLatestId(serviceConnectionId);
         var currentValue = db.ImportState.SingleOrDefault(x => x.Id == id);

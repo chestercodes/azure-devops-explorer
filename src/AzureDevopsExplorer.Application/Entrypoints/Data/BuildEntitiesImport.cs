@@ -3,21 +3,24 @@ using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class BuildEntitiesImport
 {
+    private readonly ILogger logger;
     private readonly VssConnection vssConnection;
     private readonly AzureDevopsApiProjectClient httpClient;
     private readonly string projectName;
 
-    public BuildEntitiesImport(VssConnection vssConnection, AzureDevopsApiProjectClient httpClient, string projectName)
+    public BuildEntitiesImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.vssConnection = vssConnection;
-        this.httpClient = httpClient;
-        this.projectName = projectName;
+        logger = dataContext.GetLogger();
+        this.vssConnection = dataContext.VssConnection.Value;
+        this.httpClient = dataContext.HttpClient.Value;
+        this.projectName = dataContext.Project.ProjectName;
     }
 
     public async Task Run(DataConfig config)

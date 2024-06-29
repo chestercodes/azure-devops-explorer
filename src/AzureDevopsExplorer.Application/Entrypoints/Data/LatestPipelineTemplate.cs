@@ -4,15 +4,18 @@ using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class LatestPipelineTemplate
 {
+    private readonly ILogger logger;
     private readonly AzureDevopsApiProjectClient httpClient;
 
-    public LatestPipelineTemplate(AzureDevopsApiProjectClient httpClient)
+    public LatestPipelineTemplate(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        logger = dataContext.GetLogger();
+        this.httpClient = dataContext.HttpClient.Value;
     }
 
     public async Task Run(DataConfig config)

@@ -14,7 +14,7 @@ public class GetServiceEndpointExecutionHistory
         this.httpClient = httpClient;
     }
 
-    public async Task<GetServiceEndpointExecutionHistoryResult> GetNext(string serviceEndpointId, string? continuationToken = null)
+    public async Task<GetServiceEndpointExecutionHistoryResult> GetNext(Guid serviceEndpointId, string? continuationToken = null)
     {
 
         var conQuery = continuationToken != null ? $"?continuationToken={continuationToken}" : "";

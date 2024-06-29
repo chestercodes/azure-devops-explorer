@@ -1,18 +1,22 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.Application.Domain;
 using AzureDevopsExplorer.AzureDevopsApi;
-using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Data;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class CodeSearchImport
 {
-    private readonly AzureDevopsApiProjectClient httpClient;
+    private readonly ILogger logger;
+    private readonly AzureDevopsApiProjectQueries queries;
+    private readonly AzureDevopsProject project;
 
-    public CodeSearchImport(AzureDevopsApiProjectClient httpClient)
+    public CodeSearchImport(AzureDevopsProjectDataContext dataContext)
     {
-        this.httpClient = httpClient;
+        this.queries = dataContext.Queries.Value;
+        this.project = dataContext.Project;
+        logger = dataContext.GetLogger();
     }
 
     public async Task Run(DataConfig config)
@@ -25,13 +29,11 @@ public class CodeSearchImport
 
     public async Task RunCodeSearchImport()
     {
-        var queries = new AzureDevopsApiProjectQueries(httpClient);
-
         using var db = new DataContext();
 
         await EnsureTheresAtLeastSomeKeywordsToSearchFor(db);
 
-        foreach (var term in db.CodeSearchKeyword.ToList())
+        foreach (var term in db.CodeSearchKeyword.Where(x => x.ProjectId == null || x.ProjectId == project.ProjectId).ToList())
         {
             var result = await queries.CodeSearch(term.SearchTerm);
             if (result.IsT1)
@@ -39,6 +41,9 @@ public class CodeSearchImport
                 Console.WriteLine(result.AsT1.Value.ToString());
                 continue;
             }
+
+            var existingForTerm = db.CodeSearchKeywordUsage.Where(x => x.SearchKey == term.SearchKey);
+            db.CodeSearchKeywordUsage.RemoveRange(existingForTerm);
 
             var response = result.AsT0;
             var azureReposResults = response.results.Where(x => x.repository.id != null);
@@ -67,6 +72,7 @@ public class CodeSearchImport
                 {
                     SearchKey = searchKey,
                     SearchTerm = searchTerm,
+                    ProjectId = null
                 });
             }
 

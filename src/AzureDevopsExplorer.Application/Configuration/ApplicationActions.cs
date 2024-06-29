@@ -7,8 +7,39 @@ public class DataAction
     public ApplicationConfig Config { get; set; }
 }
 
+public class ProcessAction
+{
+    public string Command { get; set; }
+    public string Info { get; set; }
+    public ApplicationConfig Config { get; set; }
+}
+
 public class ApplicationActions
 {
+    public static List<ProcessAction> GetAllProcessActions
+    {
+        get
+        {
+            return new List<ProcessAction>
+            {
+                new ProcessAction
+                {
+                    Command = "update-pipeline-and-run",
+                    Info = "Update latest pipeline and run tables.",
+                    Config = new ProcessConfig { UpdateLatestPipelineAndRun = true }.ToApplicationConfig()
+                },
+
+                new ProcessAction
+                {
+                    Command = "derive-resource-permissions",
+                    Info = "Derive resource permissions from ACL tables.",
+                    Config = new ProcessConfig { DerivePermissions = true }.ToApplicationConfig()
+                },
+
+            };
+        }
+    }
+
     public static List<DataAction> GetAllDataActions
     {
         get
@@ -34,6 +65,12 @@ public class ApplicationActions
                     Command = "acl-import",
                     Info = "Import access control lists.",
                     Config = new DataConfig { AccessControlListImport = true, SecurityNamespaceImport = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "agent-pool-import",
+                    Info = "Import agent pools.",
+                    Config = new DataConfig { AgentPoolImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {
@@ -97,6 +134,18 @@ public class ApplicationActions
                 },
                 new DataAction
                 {
+                    Command = "graph-add-applications",
+                    Info = "Add Entra applications from graph API.",
+                    Config = new DataConfig { GraphAddApplications = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "graph-add-groups",
+                    Info = "Add Entra groups from graph API.",
+                    Config = new DataConfig { GraphAddGroups = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
                     Command = "identity-import",
                     Info = "Add identity.",
                     Config = new DataConfig { IdentityImport = true }.ToApplicationConfig()
@@ -106,6 +155,12 @@ public class ApplicationActions
                     Command = "pipeline-environment-import",
                     Info = "Add pipeline environments information.",
                     Config = new DataConfig { PipelineEnvironmentImport = true }.ToApplicationConfig()
+                },
+                new DataAction
+                {
+                    Command = "pipeline-permissions-import",
+                    Info = "Add pipeline approval permissions information.",
+                    Config = new DataConfig { PipelinePermissionsImport = true }.ToApplicationConfig()
                 },
                 new DataAction
                 {

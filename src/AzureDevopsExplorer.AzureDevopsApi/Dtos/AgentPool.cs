@@ -17,9 +17,9 @@ public class AgentPool
     [JsonProperty("agentCloudId")]
     public int? AgentCloudId { get; set; }
     [JsonProperty("createdBy")]
-    public Createdby CreatedBy { get; set; }
+    public AgentPoolCreatedby? CreatedBy { get; set; }
     [JsonProperty("owner")]
-    public Owner Owner { get; set; }
+    public AgentPoolOwner? Owner { get; set; }
     [JsonProperty("id")]
     public int Id { get; set; }
     [JsonProperty("scope")]

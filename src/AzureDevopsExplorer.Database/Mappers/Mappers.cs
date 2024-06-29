@@ -4,7 +4,7 @@ using PR = Microsoft.TeamFoundation.SourceControl.WebApi.GitPullRequest;
 
 namespace AzureDevopsExplorer.Database.Mappers
 {
-    [Mapper(EnumMappingStrategy = EnumMappingStrategy.ByName, EnumMappingIgnoreCase = true)]
+    [Mapper(EnumMappingStrategy = EnumMappingStrategy.ByName, EnumMappingIgnoreCase = true, PropertyNameMappingStrategy = PropertyNameMappingStrategy.CaseInsensitive)]
     public partial class Mappers
     {
         public partial Model.Data.Project MapTeamProjectReference(Microsoft.TeamFoundation.Core.WebApi.TeamProjectReference x);
@@ -58,6 +58,7 @@ namespace AzureDevopsExplorer.Database.Mappers
 
         public partial Model.Data.GitRepository MapGitRepository(Microsoft.TeamFoundation.SourceControl.WebApi.GitRepository data);
         public partial void MapGitRepository(Microsoft.TeamFoundation.SourceControl.WebApi.GitRepository data, Model.Data.GitRepository existingTarget);
+        public partial void MapGitRepository(Model.Data.GitRepository data, Model.Data.GitRepository existingTarget);
 
         [MapProperty(nameof(PR.LastMergeCommit) + "." + nameof(GitCommitRef.CommitId), nameof(Model.Data.GitPullRequest.LastMergeCommitId))]
         [MapProperty(nameof(PR.LastMergeSourceCommit) + "." + nameof(GitCommitRef.CommitId), nameof(Model.Data.GitPullRequest.LastMergeSourceCommitId))]
@@ -73,5 +74,7 @@ namespace AzureDevopsExplorer.Database.Mappers
 
         public partial Model.Data.SecurityNamespace MapSecurityNamespace(AzureDevopsApi.Dtos.SecurityNamespace data);
         public partial Model.Data.SecureFile MapSecureFile(AzureDevopsApi.Dtos.SecureFile data);
+        public partial Model.Data.AgentPool MapAgentPool(AzureDevopsApi.Dtos.AgentPool data);
+        public partial Model.Data.AuditLog MapAuditLogEntry(AzureDevopsApi.Dtos.DecoratedAuditLogEntry data);
     }
 }

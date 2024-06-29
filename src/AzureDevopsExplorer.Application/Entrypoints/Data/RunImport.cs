@@ -1,26 +1,10 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
-using AzureDevopsExplorer.Application.Entrypoints.Evaluate;
-using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
-using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Data;
 public class RunImport
 {
-    private readonly AzureDevopsApiOrgClient httpOrgClient;
-    private readonly AzureDevopsApiProjectClient httpClient;
-    private readonly VssConnection connection;
-    private readonly string projectName;
-
-    public RunImport(AzureDevopsApiOrgClient httpOrgClient, VssConnection connection, string projectName)
-    {
-        this.httpClient = new AzureDevopsApiProjectClient(httpOrgClient.Info.AsProjectInfo(projectName));
-        this.httpOrgClient = httpOrgClient;
-        this.connection = connection;
-        this.projectName = projectName;
-    }
-
-    public async Task Run(DataConfig config)
+    public RunImport()
     {
         using (var db = new DataContext())
         {
@@ -29,57 +13,65 @@ public class RunImport
                 db.Database.EnsureCreated();
             }
         }
+    }
 
-        var addLatestBuilds = new BuildsLatestDefaultFromPipeline(connection, httpClient, projectName);
-        await addLatestBuilds.Run(config);
+    public async Task RunOrganisationEntityImport(DataConfig config, AzureDevopsOrganisationDataContext dataContext)
+    {
+        var agentPoolImport = new AgentPoolImport(dataContext);
+        await agentPoolImport.Run(config);
 
-        var addAllBuilds = new BuildsAllCompletedFromStart(connection, projectName);
-        await addAllBuilds.Run(config);
-
-        var buildEntitiesImport = new BuildEntitiesImport(connection, httpClient, projectName);
-        await buildEntitiesImport.Run(config);
-
-        var buildYamlAnalysis = new BuildYamlAnalysis(connection, projectName);
-        await buildYamlAnalysis.Run(config);
-
-        var gitEntitiesImport = new GitEntitiesImport(connection, projectName);
-        await gitEntitiesImport.Run(config);
-
-        var pipelineImportCmd = new PipelineImportCmd(httpClient);
-        await pipelineImportCmd.Run(config);
-
-        var latestPipelineTemplate = new LatestPipelineTemplate(httpClient);
-        await latestPipelineTemplate.Run(config);
-
-        var serviceEndpointImport = new ServiceEndpointImport(httpClient);
-        await serviceEndpointImport.Run(config);
-
-        var secureFileImport = new SecureFileImport(httpClient);
-        await secureFileImport.Run(config);
-
-        var variableGroupImport = new VariableGroupImport(httpClient);
-        await variableGroupImport.Run(config);
-
-        var pipelineEnvironmentImport = new PipelineEnvironmentImport(httpClient);
-        await pipelineEnvironmentImport.Run(config);
-
-        var checkConfigurationImport = new CheckConfigurationImport(httpClient);
-        await checkConfigurationImport.Run(config);
-
-        var securityNamespaceImport = new SecurityNamespacesImport(httpOrgClient);
+        var securityNamespaceImport = new SecurityNamespacesImport(dataContext);
         await securityNamespaceImport.Run(config);
 
-        var aclImport = new AccessControlListImport(httpOrgClient);
+        var aclImport = new AccessControlListImport(dataContext);
         await aclImport.Run(config);
 
-        var identityImport = new IdentityImportCmd(httpOrgClient);
+        var identityImport = new IdentityImportCmd(dataContext);
         await identityImport.Run(config);
+    }
 
-        var codeSearchImport = new CodeSearchImport(httpClient);
+    public async Task RunProjectEntityImport(DataConfig config, AzureDevopsProjectDataContext dataContext)
+    {
+        var addLatestBuilds = new BuildsLatestDefaultFromPipeline(dataContext);
+        await addLatestBuilds.Run(config);
+
+        var addAllBuilds = new BuildsAllCompletedFromStart(dataContext);
+        await addAllBuilds.Run(config);
+
+        var buildEntitiesImport = new BuildEntitiesImport(dataContext);
+        await buildEntitiesImport.Run(config);
+
+        var buildYamlAnalysis = new BuildYamlAnalysis(dataContext);
+        await buildYamlAnalysis.Run(config);
+
+        var gitEntitiesImport = new GitEntitiesImport(dataContext);
+        await gitEntitiesImport.Run(config);
+
+        var pipelineImportCmd = new PipelineImportCmd(dataContext);
+        await pipelineImportCmd.Run(config);
+
+        var latestPipelineTemplate = new LatestPipelineTemplate(dataContext);
+        await latestPipelineTemplate.Run(config);
+
+        var serviceEndpointImport = new ServiceEndpointImport(dataContext);
+        await serviceEndpointImport.Run(config);
+
+        var secureFileImport = new SecureFileImport(dataContext);
+        await secureFileImport.Run(config);
+
+        var variableGroupImport = new VariableGroupImport(dataContext);
+        await variableGroupImport.Run(config);
+
+        var pipelineEnvironmentImport = new PipelineEnvironmentImport(dataContext);
+        await pipelineEnvironmentImport.Run(config);
+
+        var checkConfigurationImport = new CheckConfigurationImport(dataContext);
+        await checkConfigurationImport.Run(config);
+
+        var pipelinePermissionsImport = new PipelinePermissionsImport(dataContext);
+        await pipelinePermissionsImport.Run(config);
+
+        var codeSearchImport = new CodeSearchImport(dataContext);
         await codeSearchImport.Run(config);
-
-        // todo, find a better place?
-        var deriveResourcePermissions = new DeriveResourcePermissions();
-        await deriveResourcePermissions.Run();
     }
 }

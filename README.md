@@ -10,17 +10,24 @@ the data is stuff that i'm currently finding useful in my day role as a security
 
 the following are currently retrieved:
 
+- agent pools
+- audit log
 - builds - gets all completed from start or latest from each pipeline
 - - build artifacts
 - - build timelines
 - build expanded yaml - runs analysis to find used service connection and variable groups
+- code repository search (customisable)
+- entra applications (from graph api)
+- entra groups (from graph api)
 - git pull requests
 - git pull request reviewers
 - identities
 - pipeline
 - pipeline runs - with repository and pipeline artifacts used
-- pipeline checks
+- pipeline check configurations
 - pipeline environments
+- pipeline permissions
+- pipeline variables
 - secure files
 - service endpoints
 - service endpoints execution history
@@ -29,17 +36,21 @@ the following are currently retrieved:
 - security acls
 - variable groups
 
+the following are attempted to be derived:
+
+- resource permissions from ACLs
+- latest main branch pipeline run 
+
 ## data future
 
 might eventually try to archive
 
-- full audit
 
 ## todo
 
-- in import change code, remove items that are in DB but are no longer returned from api
+- check that each entity works with multiple projects and loads with project id in neo4j
+- in import change code, remove items that are in DB but are no longer returned from api (done?)
 - in import code, check where pagination is required
-- import permissions somehow
 
 ## how to use
 
@@ -56,7 +67,7 @@ dotnet ef database update
 
 once that is done can run by changing the values in the AzureDevopsExplorer.Console/Properties/localSettings.json file.
 
-the actions can be seen in the AzureDevopsExplorer.Application/Configuration/DataAction.cs file
+the actions can be seen in the AzureDevopsExplorer.Application/Configuration/ApplicationActions.cs file
 
 ## Neo4j
 
