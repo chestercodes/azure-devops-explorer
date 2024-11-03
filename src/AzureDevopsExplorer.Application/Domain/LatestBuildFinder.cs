@@ -1,18 +1,19 @@
-﻿
+﻿using AzureDevopsExplorer.AzureDevopsApi.Build;
+
 namespace AzureDevopsExporter.Application.Domain;
 
 public class LatestBuildFinder
 {
-    public Microsoft.TeamFoundation.Build.WebApi.Build GetLatestDefaultBuild(List<Microsoft.TeamFoundation.Build.WebApi.Build> builds)
+    public BuildDto GetLatestDefaultBuild(List<BuildDto> builds)
     {
         foreach (var build in builds)
         {
-            if (build.Status != Microsoft.TeamFoundation.Build.WebApi.BuildStatus.Completed)
+            if (build.status != BuildStatus.Completed)
             {
                 continue;
             }
 
-            if (build.SourceBranch == "refs/heads/master" || build.SourceBranch == "refs/heads/main")
+            if (build.sourceBranch == "refs/heads/master" || build.sourceBranch == "refs/heads/main")
             {
                 return build;
             }

@@ -1,20 +1,24 @@
 ﻿using AzureDevopsExplorer.Application.Domain;
 using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Client;
+using AzureDevopsExplorer.Database;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzureDevopsExplorer.Application;
 
 public record AzureDevopsProjectDataContext(
+    AzureDevopsApiOrganisationClientFactory OrgClientFactory,
+    AzureDevopsApiOrgQueries OrgQueries,
     AzureDevopsProject Project,
-    Lazy<VssConnection> VssConnection,
-    Lazy<AzureDevopsApiProjectClient> HttpClient,
-    Lazy<AzureDevopsApiProjectQueries> Queries,
-    Func<ILogger> GetLogger);
+    AzureDevopsApiProjectClientFactory ProjectClientFactory,
+    AzureDevopsApiProjectQueries Queries,
+    ILoggerFactory LoggerFactory,
+    ICreateDataContexts DataContextFactory,
+    CancellationToken CancellationToken);
 
 public record AzureDevopsOrganisationDataContext(
-    Lazy<VssConnection> VssConnection,
-    Lazy<AzureDevopsApiOrgClient> HttpClient,
-    Lazy<AzureDevopsApiOrgQueries> Queries,
-    Func<ILogger> GetLogger);
+    AzureDevopsApiOrganisationClientFactory HttpClient,
+    AzureDevopsApiOrgQueries Queries,
+    ILoggerFactory LoggerFactory,
+    ICreateDataContexts DataContextFactory,
+    CancellationToken CancellationToken);

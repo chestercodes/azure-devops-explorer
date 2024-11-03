@@ -2,9 +2,16 @@
 
 public class FindNonExistingBuildIds
 {
+    private readonly ICreateDataContexts dataContext;
+
+    public FindNonExistingBuildIds(ICreateDataContexts dataContext)
+    {
+        this.dataContext = dataContext;
+    }
+
     public List<int> Run(List<int> buildIdsFromApi)
     {
-        using (var db = new DataContext())
+        using (var db = dataContext.Create())
         {
             var buildIdsAlreadyPresent = db.Build
                 .Where(x => buildIdsFromApi.Contains(x.Id))

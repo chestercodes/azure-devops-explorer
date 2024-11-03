@@ -2,16 +2,16 @@
 
 public class ApplicationConfig
 {
-    public DataConfig DataConfig { get; set; } = new DataConfig();
+    public ImportConfig ImportConfig { get; set; } = new ImportConfig();
     public ProcessConfig ProcessConfig { get; set; } = new ProcessConfig();
-
-    public bool LoadToNeo4j { get; set; }
+    public AzureDevopsConfig? AzureDevopsConfig { get; set; }
+    public SqlConfig? SqlConfig { get; set; }
+    public Neo4jConfig? Neo4jConfig { get; set; }
 
     public ApplicationConfig Combine(ApplicationConfig config)
     {
-        DataConfig = (DataConfig ?? new DataConfig()).Combine(config.DataConfig);
+        ImportConfig = (ImportConfig ?? new ImportConfig()).Combine(config.ImportConfig);
         ProcessConfig = (ProcessConfig ?? new ProcessConfig()).Combine(config.ProcessConfig);
-        LoadToNeo4j = LoadToNeo4j || config.LoadToNeo4j;
         return this;
     }
 }

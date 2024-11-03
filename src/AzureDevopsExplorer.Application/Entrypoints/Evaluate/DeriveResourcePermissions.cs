@@ -1,24 +1,30 @@
 ﻿using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
-using AzureDevopsExplorer.Application.Entrypoints.Data;
-using AzureDevopsExplorer.Database.Model.Data;
+using AzureDevopsExplorer.Application.Entrypoints.Import;
 using System.Text.RegularExpressions;
+using AzureDevopsExplorer.Database.Model.Security;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 
 public class DeriveResourcePermissions
 {
+    public DeriveResourcePermissions(ICreateDataContexts dataContextFactory)
+    {
+        this.dataContextFactory = dataContextFactory;
+    }
+
     private ResourcePermissionsDeriver deriver;
 
     public const string ProjectIdGuid = "(?<ProjectId>[0-9A-Fa-f]{8}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{12})";
     public const string ObjectIdGuid = "(?<ObjectId>[0-9A-Fa-f]{8}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{4}[-]?[0-9A-Fa-f]{12})";
     public const string ObjectIdInt = "(?<ObjectId>[0-9]+)";
+    private readonly ICreateDataContexts dataContextFactory;
 
     public List<ProjectResource> All
     {
         get
         {
-            using var db = new DataContext();
+            using var db = dataContextFactory.Create();
             return db.Project.Select(x => new ProjectResource(x.Id)).ToList();
         }
     }
@@ -59,14 +65,14 @@ public class DeriveResourcePermissions
             SecurityNamespacePermissionResourceType.AgentPool
         );
 
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var agentPools = db.AgentPool.Select(x => new OrganisationScopedResource(x.Id.ToString())).ToList();
         deriver.RunForResourceNamespace(db, config, [], [], agentPools);
     }
 
     public async Task DeriveBuildPipelinePermissions()
     {
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
         SecurityNamespaceIds.Build,
         new AccessControlTokenParser(
@@ -95,14 +101,14 @@ public class DeriveResourcePermissions
                 ),
             SecurityNamespacePermissionResourceType.Environment
         );
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var environments = db.PipelineEnvironment.Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId)).ToList();
         deriver.RunForResourceNamespace(db, config, All, environments, []);
     }
 
     public async Task DeriveGitRepositoryPermissions()
     {
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
         SecurityNamespaceIds.GitRepositories,
         new AccessControlTokenParser(
@@ -128,7 +134,7 @@ public class DeriveResourcePermissions
     {
         // TODO! theres projects in the ACLs which either don't exist, or i don't have access to
         // check whether the guids are 
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
         SecurityNamespaceIds.Identity,
         new AccessControlTokenParser(
@@ -182,7 +188,7 @@ public class DeriveResourcePermissions
             ),
         SecurityNamespacePermissionResourceType.Project
     );
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         deriver.RunForResourceNamespace(db, resourceConfig, All, [], []);
     }
 
@@ -205,7 +211,7 @@ public class DeriveResourcePermissions
             SecurityNamespacePermissionResourceType.SecureFile
         );
         // TODO!
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var projectScopedResources =
             db.SecureFile
             .Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId))
@@ -230,7 +236,7 @@ public class DeriveResourcePermissions
         SecurityNamespacePermissionResourceType.ServiceEndpoint
     );
 
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var projectScopedResources =
             (
                 from se in db.ServiceEndpoint
@@ -264,7 +270,7 @@ public class DeriveResourcePermissions
             SecurityNamespacePermissionResourceType.VariableGroup
         );
 
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
         var projectScopedResources =
             (
                 from vg in db.VariableGroup

@@ -4,18 +4,23 @@ using Microsoft.Graph;
 using AzureDevopsExplorer.Database.Model.Graph;
 using AzureDevopsExplorer.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.GraphData;
 public class GraphApplicationsImport
 {
     private readonly GraphServiceClient graphClient;
+    private readonly ICreateDataContexts dataContextFactory;
+    private ILogger logger;
 
-    public GraphApplicationsImport(GraphServiceClient graphClient)
+    public GraphApplicationsImport(GraphServiceClient graphClient, ILoggerFactory loggerFactory, ICreateDataContexts dataContextFactory)
     {
         this.graphClient = graphClient;
+        this.dataContextFactory = dataContextFactory;
+        logger = loggerFactory.CreateLogger(GetType());
     }
 
-    public async Task Run(DataConfig config)
+    public async Task Run(ImportConfig config)
     {
         if (config.GraphAddApplications)
         {
@@ -25,20 +30,27 @@ public class GraphApplicationsImport
 
     public async Task Import()
     {
-        var applications = await GetAllApplications();
-        if (applications.Count == 0)
+        try
         {
-            return;
+            var applications = await GetAllApplications();
+            if (applications.Count == 0)
+            {
+                return;
+            }
+
+            var applicationsFromApi = MapApplications(applications);
+
+            await WriteToDatabase(applicationsFromApi);
         }
-
-        var applicationsFromApi = MapApplications(applications);
-
-        await WriteToDatabase(applicationsFromApi);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed somehow");
+        }
     }
 
     private async Task WriteToDatabase(List<EntraApplication> applicationsFromApi)
     {
-        var db = new DataContext();
+        var db = dataContextFactory.Create();
         var existing = db.EntraApplication.Include(x => x.AppRoles);
         db.EntraApplication.RemoveRange(existing);
 

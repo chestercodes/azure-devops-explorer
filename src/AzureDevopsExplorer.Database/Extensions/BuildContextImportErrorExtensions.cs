@@ -10,7 +10,7 @@ public static class BuildContextImportErrorExtensions
         var errorHash = GetMd5Hash(error);
         if (db.ImportError.Any(x => x.Hash == errorHash) == false)
         {
-            db.ImportError.Add(new Model.Data.ImportError
+            db.ImportError.Add(new Model.Pipelines.ImportError
             {
                 Hash = errorHash,
                 Error = error

@@ -3,18 +3,23 @@ using Microsoft.Graph.Models;
 using Microsoft.Graph;
 using AzureDevopsExplorer.Database.Model.Graph;
 using AzureDevopsExplorer.Database;
+using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.GraphData;
 public class GraphGroupsImport
 {
     private readonly GraphServiceClient graphClient;
+    private readonly ICreateDataContexts dataContextFactory;
+    private ILogger logger;
 
-    public GraphGroupsImport(GraphServiceClient graphClient)
+    public GraphGroupsImport(GraphServiceClient graphClient, ILoggerFactory loggerFactory, ICreateDataContexts dataContextFactory)
     {
         this.graphClient = graphClient;
+        this.dataContextFactory = dataContextFactory;
+        logger = loggerFactory.CreateLogger(GetType());
     }
 
-    public async Task Run(DataConfig config)
+    public async Task Run(ImportConfig config)
     {
         if (config.GraphAddGroups)
         {
@@ -24,20 +29,27 @@ public class GraphGroupsImport
 
     public async Task Import()
     {
-        var groups = await GetAllGroups();
-        if (groups.Count == 0)
+        try
         {
-            return;
+            var groups = await GetAllGroups();
+            if (groups.Count == 0)
+            {
+                return;
+            }
+
+            var groupsFromApi = MapGroups(groups);
+
+            await WriteToDatabase(groupsFromApi);
         }
-
-        var groupsFromApi = MapGroups(groups);
-
-        await WriteToDatabase(groupsFromApi);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed somehow");
+        }
     }
 
     private async Task WriteToDatabase(List<EntraGroup> groupsFromApi)
     {
-        var db = new DataContext();
+        var db = dataContextFactory.Create();
         var existing = db.EntraGroup;
         db.EntraGroup.RemoveRange(existing);
 

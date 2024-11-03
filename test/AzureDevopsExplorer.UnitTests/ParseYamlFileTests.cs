@@ -1,5 +1,4 @@
-﻿using AzureDevopsExplorer.Application;
-using AzureDevopsExplorer.Application.Domain;
+﻿using AzureDevopsExplorer.Application.Domain;
 
 namespace AzureDevopsExplorer.UnitTests;
 

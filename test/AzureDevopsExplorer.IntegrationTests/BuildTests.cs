@@ -1,72 +1,110 @@
-using AzureDevopsExplorer.Application.Entrypoints.Data;
-using AzureDevopsExplorer.AzureDevopsApi.Auth;
-using AzureDevopsExplorer.IntegrationTests.Fixtures;
+using AzureDevopsExplorer.Application.Entrypoints.Import;
+//using AzureDevopsExplorer.IntegrationTests.Fixtures;
 using AzureDevopsExplorer.IntegrationTests.Stubs.ApiDtos;
 using AzureDevopsExplorer.Database;
-using AzureDevopsExplorer.Database.Model.Data;
+using AzureDevopsExplorer.Database.Model.Pipelines;
 using Microsoft.EntityFrameworkCore;
 using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.Application;
 using AzureDevopsExplorer.AzureDevopsApi;
+using Microsoft.Extensions.Logging;
+using AzureDevopsExplorer.AzureDevopsApi.Client;
 
 namespace AzureDevopsExplorer.IntegrationTests;
 
-public class BuildTests : IClassFixture<WiremockFixture>
+public class DataContextFactory : ICreateDataContexts
 {
-    public BuildTests(WiremockFixture wiremock)
-    {
-        WireMockFixture = wiremock;
-    }
+    private readonly string connectionString;
+    private readonly DatabaseType databaseType;
 
-    public WiremockFixture WireMockFixture { get; }
+    public DataContextFactory(string connectionString, DatabaseType databaseType)
+    {
+        this.connectionString = connectionString;
+        this.databaseType = databaseType;
+    }
+    public DataContext Create()
+    {
+        return new DataContext(connectionString, databaseType);
+    }
+}
+
+public class FakeAuthHeader : IGetAuthHeader
+{
+    public string Get()
+    {
+        return "";
+    }
+}
+
+public class BuildTests //: IClassFixture<WiremockFixture>
+{
+    //public BuildTests(WiremockFixture wiremock)
+    //{
+    //    WireMockFixture = wiremock;
+    //}
+
+    //public WiremockFixture WireMockFixture { get; }
+    public string SqlConnectionString { get; }
 
     [Fact]
     public async Task ImportsListOfBuildsWithAllEntities()
     {
         try
         {
-            ConnectionDataMapping.SetupMapping(WireMockFixture);
+            //ConnectionDataMapping.SetupMapping(WireMockFixture);
             var buildId1 = 1;
             var buildId2 = 2;
             var buildJson1 = new BuildJsonBuilder(buildId1);
             var buildJson2 = new BuildJsonBuilder(buildId2);
-            BuildJsonMapping.Setup(WireMockFixture, buildJson1);
-            BuildJsonMapping.Setup(WireMockFixture, buildJson2);
-            BuildJsonListMapping.Setup(WireMockFixture, [buildJson1, buildJson2]);
+            //BuildJsonMapping.Setup(WireMockFixture, buildJson1);
+            //BuildJsonMapping.Setup(WireMockFixture, buildJson2);
+            //BuildJsonListMapping.Setup(WireMockFixture, [buildJson1, buildJson2]);
 
             var buildArtifactId1 = 1001;
             var buildArtifactId2 = 1002;
             var buildArtifactJson1 = new BuildArtifactJsonBuilder(buildArtifactId1, "zip", buildId1);
             var buildArtifactJson2 = new BuildArtifactJsonBuilder(buildArtifactId2, "zip", buildId2);
-            BuildArtifactsJsonMapping.Setup(WireMockFixture, buildId1, [buildArtifactJson1]);
-            BuildArtifactsJsonMapping.Setup(WireMockFixture, buildId2, [buildArtifactJson2]);
+            //BuildArtifactsJsonMapping.Setup(WireMockFixture, buildId1, [buildArtifactJson1]);
+            //BuildArtifactsJsonMapping.Setup(WireMockFixture, buildId2, [buildArtifactJson2]);
 
             var buildTimeline1Builder = new BuildTimelineJsonBuilder(buildId1);
             var buildTimeline2Builder = new BuildTimelineJsonBuilder(buildId2);
-            BuildTimelineJsonMapping.Setup(WireMockFixture, buildId1, buildTimeline1Builder);
-            BuildTimelineJsonMapping.Setup(WireMockFixture, buildId2, buildTimeline2Builder);
+            //BuildTimelineJsonMapping.Setup(WireMockFixture, buildId1, buildTimeline1Builder);
+            //BuildTimelineJsonMapping.Setup(WireMockFixture, buildId2, buildTimeline2Builder);
 
             List<int> buildIds = [buildId1, buildId2];
             CleanUpBuildArtifacts([buildArtifactId1, buildArtifactId2]);
             CleanUpBuildTimelines(buildIds);
             CleanUpBuilds(buildIds);
 
+            using ILoggerFactory loggerFactory = LoggerFactory.Create(cfg => { });
+
+            var organisation = "";
+            var projectName = "";
+            var authHeader = new FakeAuthHeader();
+            var ct = new CancellationToken();
+            var orgFactory = new AzureDevopsApiOrganisationClientFactory(organisation, loggerFactory, authHeader, ct);
+            var projectFactory = new AzureDevopsApiProjectClientFactory(organisation, projectName, loggerFactory, authHeader, ct);
+            var dataContextFactory = new DataContextFactory(SqlConnectionString, DatabaseType.Sqlite);
             var dataContext = new AzureDevopsProjectDataContext(
+                orgFactory,
+                new AzureDevopsApiOrgQueries(orgFactory),
                 new Application.Domain.AzureDevopsProject(Constants.ProjectName, Guid.Parse(Constants.ProjectId)),
-                new Lazy<Microsoft.VisualStudio.Services.WebApi.VssConnection>(Connection.GetFakeConnection()),
-                new Lazy<AzureDevopsApi.Client.AzureDevopsApiProjectClient>((AzureDevopsApi.Client.AzureDevopsApiProjectClient)null),
-                new Lazy<AzureDevopsApiProjectQueries>((AzureDevopsApiProjectQueries)null),
-                () => null
+                projectFactory,
+                new AzureDevopsApiProjectQueries(projectFactory, projectName),
+                loggerFactory,
+                dataContextFactory,
+                ct
                 );
             var importEntrypoint = new RunImport();
-            await importEntrypoint.RunProjectEntityImport(new DataConfig
+            await importEntrypoint.RunProjectEntityImport(new ImportConfig
             {
                 BuildsAddFromStart = true,
                 BuildAddArtifacts = true,
                 BuildAddTimeline = true,
             },
             dataContext);
-            using var db = new DataContext();
+            using var db = dataContextFactory.Create();
 
             var b1 = buildJson1.Value;
             var build1 = db.Build
@@ -213,11 +251,11 @@ public class BuildTests : IClassFixture<WiremockFixture>
 
             var build2 = db.Build.SingleOrDefault(x => x.Id == buildId2);
             Assert.NotNull(build2);
-            var thing = WireMockFixture.AdminApi.GetRequestsAsync().Result;
+            //var thing = WireMockFixture.AdminApi.GetRequestsAsync().Result;
         }
         catch (Exception ex)
         {
-            var thing = WireMockFixture.AdminApi.GetRequestsAsync().Result;
+            //var thing = WireMockFixture.AdminApi.GetRequestsAsync().Result;
             Console.WriteLine(ex.ToString());
             throw;
         }
@@ -225,7 +263,7 @@ public class BuildTests : IClassFixture<WiremockFixture>
 
     private void CleanUpBuildArtifacts(IEnumerable<int> buildArtifactIds)
     {
-        using var db = new DataContext();
+        using var db = new DataContext(SqlConnectionString, DatabaseType.Sqlite);
         foreach (var id in buildArtifactIds)
         {
             db.BuildArtifactProperty.RemoveRange(db.BuildArtifactProperty.Where(x => x.BuildArtifactId == id));
@@ -235,7 +273,7 @@ public class BuildTests : IClassFixture<WiremockFixture>
     }
     private void CleanUpBuilds(IEnumerable<int> buildIds)
     {
-        using var db = new DataContext();
+        using var db = new DataContext(SqlConnectionString, DatabaseType.Sqlite);
         foreach (var id in buildIds)
         {
             db.BuildTaskOrchestrationPlanReference.RemoveRange(db.BuildTaskOrchestrationPlanReference.Where(x => x.BuildId == id));
@@ -248,7 +286,7 @@ public class BuildTests : IClassFixture<WiremockFixture>
     }
     private void CleanUpBuildTimelines(IEnumerable<int> buildIds)
     {
-        using var db = new DataContext();
+        using var db = new DataContext(SqlConnectionString, DatabaseType.Sqlite);
         foreach (var buildId in buildIds)
         {
             foreach (var timeline in db.BuildTimeline.Where(x => x.BuildId == buildId).ToList())
@@ -271,25 +309,4 @@ public class BuildTests : IClassFixture<WiremockFixture>
         db.SaveChanges();
     }
 
-    /*    
-        SELECT * FROM Build ;
-        SELECT * FROM BuildArtifact ;
-        SELECT * FROM BuildArtifactProperty ;
-        SELECT * FROM BuildRepository ;
-        SELECT * FROM BuildTemplateParameter ;
-        SELECT * FROM BuildTimeline ;
-        SELECT * FROM BuildTimelineAttempt ;
-        SELECT * FROM BuildTimelineIssue ;
-        SELECT * FROM BuildTimelineIssueData ;
-        SELECT * FROM BuildTimelineRecord ;
-        SELECT * FROM BuildTriggerInfo ;
-        SELECT * FROM DefinitionReference ;
-        SELECT * FROM IdentityRef ;
-        SELECT * FROM IdentityRefLink ;
-        SELECT * FROM IdentitySubjectDescriptor ;
-        SELECT * FROM ImportState ;
-        SELECT * FROM ReferenceLink ;
-        SELECT * FROM TaskOrchestrationPlanReference ;
-        SELECT * FROM TeamProjectReference ;
-    */
 }

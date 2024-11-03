@@ -1,6 +1,6 @@
 ﻿using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Neo4j.NodeLoaders;
-using ResourceType = AzureDevopsExplorer.Database.Model.Data.SecurityNamespacePermissionResourceType;
+using ResourceType = AzureDevopsExplorer.Database.Model.Security.SecurityNamespacePermissionResourceType;
 
 namespace AzureDevopsExplorer.Neo4j.RelationshipLoaders;
 

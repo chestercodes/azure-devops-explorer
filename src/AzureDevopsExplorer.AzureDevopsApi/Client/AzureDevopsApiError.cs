@@ -1,30 +1,42 @@
-﻿using Newtonsoft.Json;
-using OneOf;
+﻿using System.Net;
 
 namespace AzureDevopsExplorer.AzureDevopsApi.Client;
 
-public class AzureDevopsApiError : OneOfBase<(ErrorResponse, Exception), Exception>
+public class AzureDevopsApiError
 {
-    protected AzureDevopsApiError(OneOf<(ErrorResponse, Exception), Exception> input) : base(input)
+    public HttpRequestException Exception { get; private set; }
+
+    public AzureDevopsApiError(HttpRequestException exception)
     {
+        Exception = exception;
     }
 
-    public static AzureDevopsApiError FromError(ErrorResponse error, Exception ex)
-    {
-        return new AzureDevopsApiError(OneOf<(ErrorResponse, Exception), Exception>.FromT0((error, ex)));
-    }
+    private HashSet<HttpStatusCode> httpStatusCodesWorthRetrying =
+        new HashSet<HttpStatusCode> {
+            HttpStatusCode.RequestTimeout, // 408
+            HttpStatusCode.BadGateway, // 502
+            HttpStatusCode.ServiceUnavailable, // 503
+            HttpStatusCode.GatewayTimeout // 504
+        };
 
-    public static AzureDevopsApiError FromEx(Exception ex)
+    public bool ProbablyNotTransientError
     {
-        return new AzureDevopsApiError(OneOf<(ErrorResponse, Exception), Exception>.FromT1(ex));
+        get
+        {
+            if (Exception.StatusCode == null)
+            {
+                return true;
+            }
+            var isWorthRetrying = httpStatusCodesWorthRetrying.Contains(Exception.StatusCode.Value);
+            return isWorthRetrying == false;
+        }
     }
 
     public string AsError
     {
         get
         {
-            var msg = this.Match(a => JsonConvert.SerializeObject(a.Item1) + a.Item2.ToString(), x => x.ToString());
-            return msg;
+            return this.ToString();
         }
     }
 }

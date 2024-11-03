@@ -19,7 +19,7 @@ public class CheckConfiguration : ILoadNodesToNeo4J
         await loader.DeleteThenLoadNodes(Name, checkConfigsVals.ToArray());
     }
 
-    private static Dictionary<string, string> ParseCheckConfiguration(Database.Model.Data.CheckConfiguration c)
+    private static Dictionary<string, string> ParseCheckConfiguration(Database.Model.Security.CheckConfiguration c)
     {
         var toReturn = new Dictionary<string, string>{
             { Props.Id, c.Id.ToString() },

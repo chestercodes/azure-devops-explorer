@@ -1,40 +1,42 @@
-﻿namespace AzureDevopsExplorer.Database.Extensions;
+﻿using AzureDevopsExplorer.AzureDevopsApi.Pipelines;
+
+namespace AzureDevopsExplorer.Database.Extensions;
 
 public static class BuildContextAddPipelineExtensions
 {
     private static Mappers.Mappers mapper = new Mappers.Mappers();
 
-    public static DataContext AddPipelineRun(this DataContext db, AzureDevopsApi.Dtos.PipelineRun run)
+    public static DataContext AddPipelineRun(this DataContext db, PipelineRun run)
     {
         var pipelineRun = mapper.MapPipelineRun(run);
-        if (run.Resources.Pipelines != null)
+        if (run.resources.pipelines != null)
         {
-            foreach (var pipeline in run.Resources.Pipelines)
+            foreach (var pipeline in run.resources.pipelines)
             {
-                pipelineRun.ResourcesPipelines.Add(new Model.Data.PipelineRunPipelineInfo
+                pipelineRun.ResourcesPipelines.Add(new Model.Pipelines.PipelineRunPipelineInfo
                 {
-                    PipelineRunId = run.Id,
+                    PipelineRunId = run.id,
                     ResourceRefName = pipeline.Key,
-                    Name = pipeline.Value.Pipeline?.Name,
-                    Revision = pipeline.Value.Pipeline?.Revision,
+                    Name = pipeline.Value.pipeline?.name,
+                    Revision = pipeline.Value.pipeline?.revision,
                     //Url = pipeline.Value.Pipeline?.Url,
-                    Folder = pipeline.Value.Pipeline?.Folder,
-                    Version = pipeline.Value.Version
+                    Folder = pipeline.Value.pipeline?.folder,
+                    Version = pipeline.Value.version
                 });
             }
         }
-        if (run.Resources.Repositories != null)
+        if (run.resources.repositories != null)
         {
-            foreach (var repo in run.Resources.Repositories)
+            foreach (var repo in run.resources.repositories)
             {
-                pipelineRun.ResourcesRepositories.Add(new Model.Data.PipelineRunRepositoryInfo
+                pipelineRun.ResourcesRepositories.Add(new Model.Pipelines.PipelineRunRepositoryInfo
                 {
-                    PipelineRunId = run.Id,
+                    PipelineRunId = run.id,
                     ResourceRefName = repo.Key,
-                    RefName = repo.Value.RefName,
-                    RepositoryId = repo.Value.Repository.Id,
-                    RepositoryType = repo.Value.Repository.Type,
-                    Version = repo.Value.Version,
+                    RefName = repo.Value.refName,
+                    RepositoryId = repo.Value.repository.id,
+                    RepositoryType = repo.Value.repository.type,
+                    Version = repo.Value.version,
                 });
             }
         }

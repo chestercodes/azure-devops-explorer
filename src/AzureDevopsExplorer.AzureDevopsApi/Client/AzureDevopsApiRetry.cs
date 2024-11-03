@@ -1,5 +1,4 @@
-﻿using Flurl.Http;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using Polly.Wrap;
@@ -9,14 +8,14 @@ namespace AzureDevopsExplorer.AzureDevopsApi.Client;
 
 public class AzureDevopsApiRetry
 {
-    public static bool IsTransientError(FlurlHttpException exception)
+    public static bool IsTransientError(HttpRequestException exception)
     {
-        int[] httpStatusCodesWorthRetrying =
+        HttpStatusCode[] httpStatusCodesWorthRetrying =
         {
-            (int)HttpStatusCode.RequestTimeout, // 408
-            (int)HttpStatusCode.BadGateway, // 502
-            (int)HttpStatusCode.ServiceUnavailable, // 503
-            (int)HttpStatusCode.GatewayTimeout // 504
+            HttpStatusCode.RequestTimeout, // 408
+            HttpStatusCode.BadGateway, // 502
+            HttpStatusCode.ServiceUnavailable, // 503
+            HttpStatusCode.GatewayTimeout // 504
         };
 
         return exception.StatusCode.HasValue && httpStatusCodesWorthRetrying.Contains(exception.StatusCode.Value);
@@ -24,7 +23,7 @@ public class AzureDevopsApiRetry
 
     public static readonly Func<ILogger, AsyncRetryPolicy> GetTransientPolicy =
         logger =>
-            Policy.Handle<FlurlHttpException>(IsTransientError)
+            Policy.Handle<HttpRequestException>(IsTransientError)
            .WaitAndRetryAsync(5, retryAttempt =>
            {
                var nextAttemptIn = TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
@@ -39,11 +38,11 @@ public class AzureDevopsApiRetry
 
     public static readonly Func<ILogger, AsyncRetryPolicy> GetTooManyRequestsPolicy =
         logger =>
-            Policy.Handle<FlurlHttpException>(x => x.StatusCode == 429)
-           .WaitAndRetryAsync(1000,
+            Policy.Handle<HttpRequestException>(x => x.StatusCode == HttpStatusCode.TooManyRequests)
+           .WaitAndRetryAsync(10,
                 sleepDurationProvider: (n, ex, cxt) =>
                {
-                   var httpEx = ex as FlurlHttpException;
+                   var httpEx = ex as HttpRequestException;
                    if (httpEx == null)
                    {
                        throw ex;
@@ -51,22 +50,22 @@ public class AzureDevopsApiRetry
 
                    var secondsToWait = MinSecondsToWait;
                    var messageToLog = MinWaitMessage;
-                   if (httpEx.Call.Response.Headers.TryGetFirst("Retry-After", out string retryAfter))
-                   {
-                       if (int.TryParse(retryAfter, out int retryAfterInt))
-                       {
-                           if (retryAfterInt > MaxSecondsToWait)
-                           {
-                               secondsToWait = MaxSecondsToWait;
-                               messageToLog = RetryAfterLongerThanMaxWaitMessage;
-                           }
-                           else
-                           {
-                               secondsToWait = retryAfterInt;
-                               messageToLog = $"429 received, listen to retry-after header and wait {retryAfterInt} seconds";
-                           }
-                       }
-                   }
+                   //if (httpEx.HttpRequestError.Response.Headers.TryGetFirst("Retry-After", out string retryAfter))
+                   //{
+                   //    if (int.TryParse(retryAfter, out int retryAfterInt))
+                   //    {
+                   //        if (retryAfterInt > MaxSecondsToWait)
+                   //        {
+                   //            secondsToWait = MaxSecondsToWait;
+                   //            messageToLog = RetryAfterLongerThanMaxWaitMessage;
+                   //        }
+                   //        else
+                   //        {
+                   //            secondsToWait = retryAfterInt;
+                   //            messageToLog = $"429 received, listen to retry-after header and wait {retryAfterInt} seconds";
+                   //        }
+                   //    }
+                   //}
 
                    logger.LogInformation(messageToLog);
                    return TimeSpan.FromSeconds(secondsToWait);

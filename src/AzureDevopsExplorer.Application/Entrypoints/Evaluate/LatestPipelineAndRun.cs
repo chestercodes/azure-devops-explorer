@@ -1,10 +1,16 @@
-﻿using AzureDevopsExplorer.Application.Configuration;
-using AzureDevopsExplorer.Database;
-using AzureDevopsExplorer.Database.Model.Data;
+﻿using AzureDevopsExplorer.Database;
+using AzureDevopsExplorer.Database.Model.Pipelines;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 public class LatestPipelineAndRun
 {
+    private readonly ICreateDataContexts dataContextFactory;
+
+    public LatestPipelineAndRun(ICreateDataContexts dataContextFactory)
+    {
+        this.dataContextFactory = dataContextFactory;
+    }
+
     public async Task Run()
     {
         await RunAddLatestPipeline();
@@ -13,7 +19,7 @@ public class LatestPipelineAndRun
 
     public async Task RunAddLatestPipeline()
     {
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
 
         var latestPipelineAndRevisions = db.Definition
             .GroupBy(dr => dr.Id)
@@ -48,7 +54,7 @@ public class LatestPipelineAndRun
     public async Task RunAddLatestPipelineDefaultRun()
     {
         // add builds which mention environment which are probably deployments and other ones which are probably builds
-        using var db = new DataContext();
+        using var db = dataContextFactory.Create();
 
         var lastBuildsWithEnvParameter = db.Build
             .Join(

@@ -7,9 +7,19 @@ namespace AzureDevopsExplorer.Application.Entrypoints.Loader;
 
 public class LoadLatest
 {
+    private readonly ICreateDataContexts dataContexts;
+    private readonly ICreateNeo4jDriver neo4JDriver;
+    private readonly CancellationToken cancellationToken;
+
+    public LoadLatest(ICreateDataContexts dataContexts, ICreateNeo4jDriver neo4jDriver, CancellationToken cancellationToken)
+    {
+        this.dataContexts = dataContexts;
+        neo4JDriver = neo4jDriver;
+        this.cancellationToken = cancellationToken;
+    }
     public async Task Run()
     {
-        using var driver = new Neo4jDriver();
+        using var driver = neo4JDriver.Create();
         var loader = new Neo4jLoader(driver);
 
         var nodeLoaders = new List<ILoadNodesToNeo4J>
@@ -36,7 +46,7 @@ public class LoadLatest
             new IsMemberOfRelationships(),
         };
 
-        using (var db = new DataContext())
+        using (var db = dataContexts.Create())
         {
             await DeleteRelationships(loader, relationshipLoaders);
 

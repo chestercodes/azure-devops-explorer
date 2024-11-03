@@ -1,17 +1,19 @@
-﻿namespace AzureDevopsExplorer.Neo4j;
+﻿using Neo4j.Driver;
+
+namespace AzureDevopsExplorer.Neo4j;
 
 public class Neo4jLoader
 {
-    private readonly IHaveDriver driver;
+    private readonly IDriver driver;
 
-    public Neo4jLoader(IHaveDriver driver)
+    public Neo4jLoader(IDriver driver)
     {
         this.driver = driver;
     }
 
     public async Task DeleteAllRelationships(List<string> relationshipTypes)
     {
-        await using var session = driver.Driver.AsyncSession();
+        await using var session = driver.AsyncSession();
         await session.ExecuteWriteAsync(
             async tx =>
             {
@@ -24,7 +26,7 @@ public class Neo4jLoader
 
     public async Task DeleteThenLoadNodes(string nodeType, Dictionary<string, string>[] nodes)
     {
-        await using var session = driver.Driver.AsyncSession();
+        await using var session = driver.AsyncSession();
         await session.ExecuteWriteAsync(
             async tx =>
             {
@@ -39,7 +41,7 @@ public class Neo4jLoader
 
     public async Task LoadRelationships(IEnumerable<Relationship> relationships)
     {
-        await using var session = driver.Driver.AsyncSession();
+        await using var session = driver.AsyncSession();
         await session.ExecuteWriteAsync(
             async tx =>
             {

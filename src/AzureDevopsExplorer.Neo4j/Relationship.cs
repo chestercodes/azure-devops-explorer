@@ -1,7 +1,5 @@
 ﻿namespace AzureDevopsExplorer.Neo4j;
 
-
-
 public class RelationshipMatchPair
 {
     public string MatchName { get; set; }

@@ -131,8 +131,7 @@ public class ParseYamlFile
     {
         try
         {
-            var input = new StringReader(yamlFile);
-
+            var input = GetStringReader(yamlFile);
             var yaml = new YamlStream();
             yaml.Load(input);
 
@@ -200,6 +199,33 @@ public class ParseYamlFile
         {
             return e;
         }
+    }
+
+    private static string CleanYamlString(string yaml)
+    {
+        var splitLine = "Template and static variable resolution complete. Final runtime YAML document:";
+        if (yaml.Contains(splitLine))
+        {
+            var spl = yaml.Split(splitLine);
+            if (spl.Length > 1)
+            {
+                var cleaned = spl[1].Trim();
+                return cleaned;
+            }
+        }
+
+        if (yaml.StartsWith("System.String: "))
+        {
+            var cleaned = yaml.Substring("System.String: ".Length);
+            return cleaned;
+        }
+
+        return yaml;
+    }
+
+    private static StringReader GetStringReader(string yamlFile)
+    {
+        return new StringReader(CleanYamlString(yamlFile));
     }
 }
 

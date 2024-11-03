@@ -1,8 +1,8 @@
 ﻿using AzureDevopsExplorer.Database;
-using AzureDevopsExplorer.Database.Model.Data;
 using AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
+using AzureDevopsExplorer.Database.Model.Security;
 
-namespace AzureDevopsExplorer.Application.Entrypoints.Data;
+namespace AzureDevopsExplorer.Application.Entrypoints.Import;
 
 public class ResourcePermissionsDeriver
 {

@@ -1,4 +1,4 @@
-﻿using AzureDevopsExplorer.Database.Model.Data;
+﻿using AzureDevopsExplorer.Database.Model.Security;
 
 namespace AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
 

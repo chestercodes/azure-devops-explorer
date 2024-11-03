@@ -1,5 +1,4 @@
-﻿using AzureDevopsExplorer.Database.Model.Data;
-using Microsoft.VisualStudio.Services.Common;
+﻿using AzureDevopsExplorer.Database.Model.Security;
 
 namespace AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
 
@@ -112,7 +111,10 @@ public class DescriptorAcls
                     NamespacePermissions
                     .Where(x => x.Permission == acl.Allow)
                     .Select(x => x.Bit);
-                allowActionBits.AddRange(actions);
+                foreach (var action in actions)
+                {
+                    allowActionBits.Add(action);
+                }
             }
 
             if (acl.Deny != 0)
@@ -121,7 +123,10 @@ public class DescriptorAcls
                     NamespacePermissions
                     .Where(x => x.Permission == acl.Deny)
                     .Select(x => x.Bit);
-                denyActionBits.AddRange(actions);
+                foreach (var action in actions)
+                {
+                    denyActionBits.Add(action);
+                }
             }
         }
     }

@@ -2,27 +2,25 @@
 
 namespace AzureDevopsExplorer.Neo4j;
 
-public interface IHaveDriver
+public interface ICreateNeo4jDriver
 {
-    IDriver Driver { get; }
+    IDriver Create();
 }
 
-public class Neo4jDriver : IDisposable, IHaveDriver
+public class Neo4jDriverFactory : ICreateNeo4jDriver
 {
-    private readonly IDriver _driver;
+    private readonly string url;
+    private readonly string username;
+    private readonly string password;
 
-    IDriver IHaveDriver.Driver => _driver;
-
-    public Neo4jDriver()
+    public Neo4jDriverFactory(string url, string username, string password)
     {
-        string user = Environment.GetEnvironmentVariable("NEO4J_USERNAME") ?? "neo4j";
-        string password = Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ?? "somepassword";
-        string uri = Environment.GetEnvironmentVariable("NEO4J_URL") ?? "bolt://localhost:7687";
-        _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+        this.url = url;
+        this.username = username;
+        this.password = password;
     }
-
-    public void Dispose()
+    public IDriver Create()
     {
-        _driver?.Dispose();
+        return GraphDatabase.Driver(url, AuthTokens.Basic(username, password));
     }
 }
