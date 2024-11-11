@@ -52,3 +52,24 @@ public class IdentityProperty
     public string Type { get; set; }
     public string Value { get; set; }
 }
+
+public class IdentityExpandedMember
+{
+    public int Id { get; set; }
+    public Guid IdentityId { get; set; }
+    public string Descriptor { get; set; }
+}
+
+public class IdentityExpandedMemberOf
+{
+    public int Id { get; set; }
+    public Guid IdentityId { get; set; }
+    public string Descriptor { get; set; }
+}
+
+public class IdentityExpandedMemberId
+{
+    public int Id { get; set; }
+    public Guid IdentityId { get; set; }
+    public Guid MemberId { get; set; }
+}

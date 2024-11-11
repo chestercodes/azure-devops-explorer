@@ -23,7 +23,7 @@ public class AzureDevopsApiRetry
 
     public static readonly Func<ILogger, AsyncRetryPolicy> GetTransientPolicy =
         logger =>
-            Policy.Handle<HttpRequestException>(IsTransientError)
+            Polly.Policy.Handle<HttpRequestException>(IsTransientError)
            .WaitAndRetryAsync(5, retryAttempt =>
            {
                var nextAttemptIn = TimeSpan.FromSeconds(Math.Pow(2, retryAttempt));
@@ -38,7 +38,7 @@ public class AzureDevopsApiRetry
 
     public static readonly Func<ILogger, AsyncRetryPolicy> GetTooManyRequestsPolicy =
         logger =>
-            Policy.Handle<HttpRequestException>(x => x.StatusCode == HttpStatusCode.TooManyRequests)
+            Polly.Policy.Handle<HttpRequestException>(x => x.StatusCode == HttpStatusCode.TooManyRequests)
            .WaitAndRetryAsync(10,
                 sleepDurationProvider: (n, ex, cxt) =>
                {

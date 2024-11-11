@@ -20,6 +20,7 @@ public class AzureDevopsApiProjectQueries
     public Environments.ProjectQueries Environments => new Environments.ProjectQueries(httpClient);
     public Git.ProjectQueries Git => new Git.ProjectQueries(httpClient);
     public Pipelines.ProjectQueries Pipelines => new Pipelines.ProjectQueries(httpClient);
+    public Policy.ProjectQueries Policy => new Policy.ProjectQueries(httpClient);
     public Search.ProjectQueries Search => new Search.ProjectQueries(httpClient, projectName);
     public Security.ProjectQueries Security => new Security.ProjectQueries(httpClient);
     public ServiceEndpoints.ProjectQueries ServiceEndpoints => new ServiceEndpoints.ProjectQueries(httpClient);

@@ -22,7 +22,7 @@ public class GraphApplicationsImport
 
     public async Task Run(ImportConfig config)
     {
-        if (config.GraphAddApplications)
+        if (config.GraphAddEntraApplications)
         {
             await Import();
         }

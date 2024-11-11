@@ -2,7 +2,9 @@
 using AzureDevopsExplorer.AzureDevopsApi.Pipelines;
 using AzureDevopsExplorer.AzureDevopsApi.ServiceEndpoints;
 using AzureDevopsExplorer.Database.Model.Environment;
+using AzureDevopsExplorer.Database.Model.Graph;
 using AzureDevopsExplorer.Database.Model.Historical;
+using AzureDevopsExplorer.Database.Model.Pipelines;
 using AzureDevopsExplorer.Database.Model.Security;
 using Riok.Mapperly.Abstractions;
 
@@ -13,11 +15,11 @@ namespace AzureDevopsExplorer.Database.Mappers
     {
         public partial Model.Pipelines.PipelineCurrent MapPipelineRef(AzureDevopsApi.Pipelines.PipelineRef x);
         public partial Model.Pipelines.Project MapTeamProjectReference(AzureDevopsApi.Core.Project x);
-        [MapperIgnoreTarget(nameof(Model.Pipelines.Build.RepositoryId))]
-        [MapperIgnoreTarget(nameof(Model.Pipelines.Build.RequestedById))]
-        [MapperIgnoreTarget(nameof(Model.Pipelines.Build.RequestedForId))]
-        [MapperIgnoreTarget(nameof(Model.Pipelines.Build.DeletedById))]
-        [MapperIgnoreTarget(nameof(Model.Pipelines.Build.LastChangedById))]
+        //[MapperIgnoreTarget(nameof(Model.Pipelines.Build.RepositoryId))]
+        //[MapperIgnoreTarget(nameof(Model.Pipelines.Build.RequestedById))]
+        //[MapperIgnoreTarget(nameof(Model.Pipelines.Build.RequestedForId))]
+        //[MapperIgnoreTarget(nameof(Model.Pipelines.Build.DeletedById))]
+        //[MapperIgnoreTarget(nameof(Model.Pipelines.Build.LastChangedById))]
         public partial Model.Pipelines.Build MapBuild(AzureDevopsApi.Build.BuildDto x);
         public partial Model.Pipelines.Definition MapDefinitionReference(AzureDevopsApi.Build.Definition x);
         //public partial Model.Pipelines.BuildRepository MapBuildRepository(Microsoft.TeamFoundation.Build.WebApi.BuildRepository x);
@@ -81,5 +83,13 @@ namespace AzureDevopsExplorer.Database.Mappers
         public partial SecureFile MapSecureFile(AzureDevopsApi.DistributedTask.SecureFile data);
         public partial AgentPool MapAgentPool(AzureDevopsApi.DistributedTask.AgentPool data);
         public partial AuditLog MapAuditLogEntry(DecoratedAuditLogEntry data);
+        public partial GraphGroup MapGraphGroup(AzureDevopsApi.Graph.GraphGroup data);
+        public partial GraphUser MapGraphUser(AzureDevopsApi.Graph.GraphUser data);
+        public partial GraphServicePrincipal MapGraphServicePrincipal(AzureDevopsApi.Graph.GraphServicePrincipal data);
+
+        [MapperIgnoreTarget(nameof(PolicyConfiguration.Settings))]
+        public partial PolicyConfiguration MapPolicyConfiguration(AzureDevopsApi.Policy.PolicyConfiguration data);
+        
+        public partial GitCommit MapGitCommit(AzureDevopsApi.Git.GitCommit data);
     }
 }

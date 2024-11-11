@@ -14,5 +14,6 @@ public class AzureDevopsApiOrgQueries
     public Audit.OrgQueries Audit => new Audit.OrgQueries(httpClient);
     public Core.OrgQueries Core => new Core.OrgQueries(httpClient);
     public DistributedTask.OrgQueries DistributedTask => new DistributedTask.OrgQueries(httpClient);
+    public Graph.OrgQueries Graph => new Graph.OrgQueries(httpClient);
     public Security.OrgQueries Security => new Security.OrgQueries(httpClient);
 }

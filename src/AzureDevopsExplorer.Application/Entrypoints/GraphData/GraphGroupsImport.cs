@@ -21,7 +21,7 @@ public class GraphGroupsImport
 
     public async Task Run(ImportConfig config)
     {
-        if (config.GraphAddGroups)
+        if (config.GraphAddEntraGroups)
         {
             await Import();
         }

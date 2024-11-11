@@ -104,15 +104,39 @@ public class ImportActions
                 },
                 new ImportAction
                 {
-                    Command = "graph-add-applications",
+                    Command = "graph-add-entra-applications",
                     Info = "Add Entra applications from graph API.",
-                    Config = new ImportConfig { GraphAddApplications = true }.ToApplicationConfig()
+                    Config = new ImportConfig { GraphAddEntraApplications = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "graph-add-entra-groups",
+                    Info = "Add Entra groups from graph API.",
+                    Config = new ImportConfig { GraphAddEntraGroups = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "graph-add-users",
+                    Info = "Add graph users from Azure Devops graph API.",
+                    Config = new ImportConfig { GraphAddUsers = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "graph-add-sp",
+                    Info = "Add graph service principals from Azure Devops graph API.",
+                    Config = new ImportConfig { GraphAddServicePrincipals = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {
                     Command = "graph-add-groups",
-                    Info = "Add Entra groups from graph API.",
+                    Info = "Add graph groups from Azure Devops graph API.",
                     Config = new ImportConfig { GraphAddGroups = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "graph-add-group-memberships",
+                    Info = "Add graph group memberships from Azure Devops graph API for each of the graph groups.",
+                    Config = new ImportConfig { GraphAddGroupMemberships = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {
@@ -149,6 +173,12 @@ public class ImportActions
                     Command = "pipeline-run-template-import",
                     Info = "Add pipeline run template information.",
                     Config = new ImportConfig { PipelineRunTemplateImport = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "policy-configuration-import",
+                    Info = "Add policy configuration information.",
+                    Config = new ImportConfig { PolicyConfigurationImport = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {

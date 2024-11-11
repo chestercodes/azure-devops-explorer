@@ -1,10 +1,12 @@
-﻿namespace AzureDevopsExplorer.Database.Model.Pipelines;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
 public class IdentityImport
 {
-    public int Id { get; set; }
-    public Guid? IdentityId { get; set; }
-    public string? Descriptor { get; set; }
-    public string? SubjectDescriptor { get; set; }
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public string SubjectDescriptor { get; set; }
     public DateTime? LastImport { get; set; }
 }

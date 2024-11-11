@@ -1,6 +1,7 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.Application.Entrypoints.Import.Core;
 using AzureDevopsExplorer.Application.Entrypoints.Import.Environment;
+using AzureDevopsExplorer.Application.Entrypoints.Import.Graph;
 using AzureDevopsExplorer.Application.Entrypoints.Import.Historical;
 using AzureDevopsExplorer.Application.Entrypoints.Import.Pipelines;
 using AzureDevopsExplorer.Application.Entrypoints.Import.Security;
@@ -19,15 +20,27 @@ public class RunImport
         var aclImport = new AccessControlListImport(dataContext);
         await aclImport.Run(config);
 
-        var identityImport = new IdentityImportCmd(dataContext);
-        await identityImport.Run(config);
-
         var auditLogImport = new AuditLogImport(dataContext);
         await auditLogImport.Run(config);
+
+        var graphGroupsImport = new GraphGroupsImport(dataContext);
+        await graphGroupsImport.Run(config);
+
+        var graphUsersImport = new GraphUserImport(dataContext);
+        await graphUsersImport.Run(config);
+
+        var graphSpImport = new GraphServicePrincipalImport(dataContext);
+        await graphSpImport.Run(config);
+
+        var identityImport = new IdentitiesImport(dataContext);
+        await identityImport.Run(config);
     }
 
     public async Task RunProjectEntityImport(ImportConfig config, AzureDevopsProjectDataContext dataContext)
     {
+        var policyConfigurationImport = new PolicyConfigurationImport(dataContext);
+        await policyConfigurationImport.Run(config);
+
         var pipelinesImport = new PipelinesImport(dataContext);
         await pipelinesImport.Run(config);
 

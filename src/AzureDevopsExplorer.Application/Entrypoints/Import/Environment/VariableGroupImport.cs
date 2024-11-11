@@ -65,8 +65,7 @@ public class VariableGroupImport
             return;
         }
 
-        var identityIds = new HashSet<Guid>();
-        var variableGroupFromApi = VariableGroupFromApi(variableGroupResult.AsT0, identityIds);
+        var variableGroupFromApi = VariableGroupFromApi(variableGroupResult.AsT0);
 
         if (currentVariableGroup != null)
         {
@@ -128,7 +127,7 @@ public class VariableGroupImport
 
     }
 
-    private Database.Model.Environment.VariableGroup VariableGroupFromApi(AzureDevopsApi.DistributedTask.VariableGroup vg, HashSet<Guid> identityIds)
+    private Database.Model.Environment.VariableGroup VariableGroupFromApi(AzureDevopsApi.DistributedTask.VariableGroup vg)
     {
         var m = mapper.MapVariableGroup(vg);
         if (vg.variables == null)
@@ -142,9 +141,6 @@ public class VariableGroupImport
             vg.variableGroupProjectReferences = new List<AzureDevopsApi.DistributedTask.VariableGroupProjectReference>();
         }
         m.VariableGroupProjectReferences.Clear();
-
-        AddIdentityIfExists(identityIds, vg.createdBy);
-        AddIdentityIfExists(identityIds, vg.modifiedBy);
 
         foreach (var v in vg.variables)
         {
@@ -169,35 +165,5 @@ public class VariableGroupImport
         }
 
         return m;
-    }
-
-    private static void AddIdentityIfExists(HashSet<Guid> identityIds, VariableGroupIdentity? variableGroupId)
-    {
-        if (variableGroupId != null)
-        {
-            var id = Guid.Parse(variableGroupId.id);
-            if (id != Guid.Empty)
-            {
-                identityIds.Add(id);
-            }
-        }
-    }
-
-    private static void AddToIdentityImport(DataContext db, Guid id)
-    {
-        if (id == Guid.Empty)
-        {
-            return;
-        }
-
-        var exists = db.IdentityImport.Any(x => x.IdentityId == id);
-        if (!exists)
-        {
-            db.IdentityImport.Add(new IdentityImport
-            {
-                IdentityId = id,
-                LastImport = null
-            });
-        }
     }
 }

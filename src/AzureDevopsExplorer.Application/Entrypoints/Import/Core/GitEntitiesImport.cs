@@ -30,6 +30,10 @@ public class GitEntitiesImport
         {
             await RunAddPullRequests();
         }
+        if (config.GitAddRepositoriesDefaultBranchCommits)
+        {
+            await RunAddDefaultBranchCommits();
+        }
     }
 
     public async Task RunAddGitRepositories()
@@ -109,10 +113,9 @@ public class GitEntitiesImport
     {
         using var db = dataContext.DataContextFactory.Create();
         var existingRepoIds = db.GitRepository
+            .Where(x => x.ProjectReferenceId == dataContext.Project.ProjectId)
             .Select(x => x.Id)
             .ToList();
-
-        List<Guid> addedIdentityIds = new();
 
         foreach (var repoId in existingRepoIds)
         {
@@ -156,8 +159,6 @@ public class GitEntitiesImport
                 List<GitPullRequestReview> reviews = new();
                 foreach (var review in pullRequest.reviewers)
                 {
-                    //AddIdentityToImportTable(db, Guid.Parse(review.id), addedIdentityIds);
-
                     reviews.Add(new GitPullRequestReview
                     {
                         PullRequestId = pullRequest.pullRequestId,
@@ -170,8 +171,6 @@ public class GitEntitiesImport
                     {
                         foreach (var votedFor in review.votedFor)
                         {
-                            //AddIdentityToImportTable(db, Guid.Parse(votedFor.Id), addedIdentityIds);
-
                             reviews.Add(new GitPullRequestReview
                             {
                                 PullRequestId = pullRequest.pullRequestId,
@@ -190,21 +189,35 @@ public class GitEntitiesImport
         }
     }
 
-    //private static void AddIdentityToImportTable(DataContext db, Guid id, List<Guid> addedIdentityIds)
-    //{
-    //    if (addedIdentityIds.Contains(id))
-    //    {
-    //        return;
-    //    }
+    public async Task RunAddDefaultBranchCommits()
+    {
+        using var db = dataContext.DataContextFactory.Create();
+        var existingRepos = db.GitRepository
+            .Where(x => x.ProjectReferenceId == dataContext.Project.ProjectId)
+            .Select(x => new { x.Id, x.DefaultBranch })
+            .ToList();
 
-    //    if (db.IdentityImport.Any(x => x.IdentityId == id) == false)
-    //    {
-    //        addedIdentityIds.Add(id);
-    //        db.IdentityImport.Add(new IdentityImport
-    //        {
-    //            IdentityId = id,
-    //            LastImport = null
-    //        });
-    //    }
-    //}
+        foreach (var repo in existingRepos)
+        {
+            var commitsResult = await dataContext.Queries.Git.GetBranchCommitsForRepository(repo.Id.ToString(), repo.DefaultBranch);
+            if (commitsResult.IsT1)
+            {
+                logger.LogError(commitsResult.AsT1.AsError);
+                throw new Exception();
+            }
+            var commits = commitsResult.AsT0.value;
+
+            foreach (var commit in commits)
+            {
+                var gitCommit = mapper.MapGitCommit(commit);
+                gitCommit.RepositoryId = repo.Id;
+
+                if(db.GitCommit.Any(x => x.CommitId == commit.commitId) == false)
+                {
+                    db.GitCommit.Add(gitCommit);
+                }
+            }
+            await db.SaveChangesAsync();
+        }
+    }
 }

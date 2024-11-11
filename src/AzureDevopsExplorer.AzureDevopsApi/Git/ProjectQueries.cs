@@ -22,6 +22,12 @@ public class ProjectQueries
         return await httpClientFactory.DevProject().GetJson<ListResponse<GitPullRequest>>($"git/repositories/{repo}/pullrequests?searchCriteria.status=all");
     }
 
+    public async Task<AzureDevopsApiResult<ListResponse<GitCommit>>> GetBranchCommitsForRepository(string repo, string branch)
+    {
+        var branchName = branch.Replace("refs/heads/", "");
+        return await httpClientFactory.DevProject().GetJson<ListResponse<GitCommit>>($"git/repositories/{repo}/commits?searchCriteria.itemVersion.version={branchName}");
+    }
+
     public async Task<AzureDevopsApiResult<string>> GetFile(string repositoryId, string path)
     {
         return await httpClientFactory.DevProject().GetString($"git/repositories/{repositoryId}/items?path={path}&download=true");

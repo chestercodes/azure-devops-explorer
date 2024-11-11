@@ -41,6 +41,7 @@ public class DataContext : DbContext
 
     // Core
     public DbSet<Definition> Definition { get; set; }
+    public DbSet<GitCommit> GitCommit { get; set; }
     public DbSet<GitPullRequest> GitPullRequest { get; set; }
     public DbSet<GitPullRequestReview> GitPullRequestReview { get; set; }
     public DbSet<GitRepository> GitRepository { get; set; }
@@ -51,6 +52,8 @@ public class DataContext : DbContext
     public DbSet<IdentityImport> IdentityImport { get; set; }
     public DbSet<IdentityMemberOf> IdentityMemberOf { get; set; }
     public DbSet<IdentityMember> IdentityMember { get; set; }
+    public DbSet<IdentityExpandedMemberOf> IdentityMemberOfExpanded { get; set; }
+    public DbSet<IdentityExpandedMember> IdentityMemberExpanded { get; set; }
     public DbSet<ImportError> ImportError { get; set; }
     public DbSet<ImportState> ImportState { get; set; }
     public DbSet<PipelineCurrent> PipelineCurrent { get; set; }
@@ -87,6 +90,9 @@ public class DataContext : DbContext
     public DbSet<EntraApplication> EntraApplication { get; set; }
     public DbSet<GraphAppRole> GraphAppRole { get; set; }
     public DbSet<EntraGroup> EntraGroup { get; set; }
+    public DbSet<GraphGroup> GraphGroup { get; set; }
+    public DbSet<GraphServicePrincipal> GraphServicePrincipal { get; set; }
+    public DbSet<GraphUser> GraphUser { get; set; }
 
 
 
@@ -135,6 +141,9 @@ public class DataContext : DbContext
     // Security
     public DbSet<AccessControl> AccessControl { get; set; }
     public DbSet<AccessControlChange> AccessControlChange { get; set; }
+    public DbSet<PolicyConfiguration> PolicyConfiguration { get; set; }
+    public DbSet<PolicyConfigurationChange> PolicyConfigurationChange { get; set; }
+    public DbSet<PolicyConfigurationSetting> PolicyConfigurationSetting { get; set; }
     public DbSet<PipelineEnvironmentPipelinePermission> PipelineEnvironmentPipelinePermission { get; set; }
     public DbSet<SecurityNamespace> SecurityNamespace { get; set; }
     public DbSet<SecurityNamespaceAction> SecurityNamespaceAction { get; set; }

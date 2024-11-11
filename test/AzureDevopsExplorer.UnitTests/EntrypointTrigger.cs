@@ -31,13 +31,8 @@ public class EntrypointTrigger
 
         var (orgDataContext, projectDataContext) = GetContexts();
 
-        var entrypoint = new AuditLogImport(orgDataContext);
-        await entrypoint.AddAuditLogDates(
-            new DateTime(2024, 06, 27)
-            );
-
-        await entrypoint.AddAuditLog();
-
+        var entrypoint = new GraphUserImport(orgDataContext);
+        await entrypoint.AddGraphUsers();
     }
 
     private static (AzureDevopsOrganisationDataContext, AzureDevopsProjectDataContext) GetContexts()
@@ -149,6 +144,6 @@ public class EntrypointTrigger
         var (orgDataContext, projectDataContext) = GetContexts();
 
         var aMonthAgo = DateTime.Now.AddMonths(-1);
-        var builds = await projectDataContext.Queries.Build.GetBuildsFrom(aMonthAgo);
+        var builds = await orgDataContext.Queries.Graph.GetUsers();
     }
 }

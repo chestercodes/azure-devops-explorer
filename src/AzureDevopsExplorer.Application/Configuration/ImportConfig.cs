@@ -15,9 +15,14 @@ public class ImportConfig
     public bool BuildRunYamlAnalysis { get; set; } = false;
     public bool CheckConfigurationImport { get; set; } = false;
     public bool CodeSearchImport { get; set; } = false;
-    public bool GraphAddApplications { get; set; } = false;
+    public bool GraphAddEntraApplications { get; set; } = false;
+    public bool GraphAddEntraGroups { get; set; } = false;
     public bool GraphAddGroups { get; set; } = false;
+    public bool GraphAddGroupMemberships { get; set; } = false;
+    public bool GraphAddServicePrincipals { get; set; } = false;
+    public bool GraphAddUsers { get; set; } = false;
     public bool GitAddRepositories { get; set; } = false;
+    public bool GitAddRepositoriesDefaultBranchCommits { get; set; } = false;
     public bool GitAddPullRequests { get; set; } = false;
     public bool IdentityImport { get; set; } = false;
     public bool PipelineEnvironmentImport { get; set; } = false;
@@ -25,6 +30,7 @@ public class ImportConfig
     public bool PipelineCurrentImport { get; set; } = false;
     public bool PipelineRunImport { get; set; } = false;
     public bool PipelineRunTemplateImport { get; set; } = false;
+    public bool PolicyConfigurationImport { get; set; } = false;
     public bool ServiceEndpointAddLatest { get; set; } = false;
     public bool SecureFileImport { get; set; } = false;
     public bool SecurityNamespaceImport { get; set; } = false;
