@@ -12,7 +12,7 @@ public class GraphServicePrincipalImport
 
     public GraphServicePrincipalImport(AzureDevopsOrganisationDataContext orgDataContext)
     {
-        logger = orgDataContext.LoggerFactory.CreateLogger(GetType());
+        logger = orgDataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.orgDataContext = orgDataContext;
     }
@@ -28,6 +28,8 @@ public class GraphServicePrincipalImport
 
     public async Task AddGraphServicePrincipals()
     {
+        logger.LogInformation($"Running graph service principals import");
+
         var graphServicePrincipalsResult = await orgDataContext.Queries.Graph.GetServicePrincipals();
         if (graphServicePrincipalsResult.IsT1)
         {
@@ -64,7 +66,7 @@ public class GraphServicePrincipalImport
         db.IdentityImport.AddRange(
             subjectDescriptorsToAdd.Select(
                 subjectDescriptor =>
-                new Database.Model.Pipelines.IdentityImport
+                new Database.Model.Core.IdentityImport
                 {
                     SubjectDescriptor = subjectDescriptor,
                 }

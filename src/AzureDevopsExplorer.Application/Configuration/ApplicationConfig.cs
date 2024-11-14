@@ -7,6 +7,7 @@ public class ApplicationConfig
     public AzureDevopsConfig? AzureDevopsConfig { get; set; }
     public SqlConfig? SqlConfig { get; set; }
     public Neo4jConfig? Neo4jConfig { get; set; }
+    public LoggingConfig? LoggingConfig { get; set; }
 
     public ApplicationConfig Combine(ApplicationConfig config)
     {

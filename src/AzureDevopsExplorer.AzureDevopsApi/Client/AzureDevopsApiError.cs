@@ -36,7 +36,7 @@ public class AzureDevopsApiError
     {
         get
         {
-            return this.ToString();
+            return this.Exception.ToString();
         }
     }
 }

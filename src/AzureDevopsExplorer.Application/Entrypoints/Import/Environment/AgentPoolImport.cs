@@ -15,7 +15,7 @@ public class AgentPoolImport
 
     public AgentPoolImport(AzureDevopsOrganisationDataContext orgDataContext)
     {
-        logger = orgDataContext.LoggerFactory.CreateLogger(GetType());
+        logger = orgDataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.orgDataContext = orgDataContext;
     }
@@ -30,6 +30,7 @@ public class AgentPoolImport
 
     public async Task AddAgentPools()
     {
+        logger.LogInformation($"Running agent pool import");
         var importTime = DateTime.UtcNow;
         var agentPoolsResult = await orgDataContext.Queries.DistributedTask.GetAgentPools();
         if (agentPoolsResult.IsT1)

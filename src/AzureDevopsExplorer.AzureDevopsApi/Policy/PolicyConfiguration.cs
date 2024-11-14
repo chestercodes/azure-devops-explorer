@@ -1,6 +1,4 @@
-﻿using System.Collections;
-
-namespace AzureDevopsExplorer.AzureDevopsApi.Policy;
+﻿namespace AzureDevopsExplorer.AzureDevopsApi.Policy;
 
 public class PolicyConfiguration
 {

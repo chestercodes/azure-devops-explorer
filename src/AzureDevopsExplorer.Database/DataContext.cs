@@ -1,6 +1,7 @@
 ﻿namespace AzureDevopsExplorer.Database;
 
 using Microsoft.EntityFrameworkCore;
+using AzureDevopsExplorer.Database.Model.Core;
 using AzureDevopsExplorer.Database.Model.Pipelines;
 using AzureDevopsExplorer.Database.Model.Graph;
 using AzureDevopsExplorer.Database.Model.Security;
@@ -40,7 +41,6 @@ public class DataContext : DbContext
     }
 
     // Core
-    public DbSet<Definition> Definition { get; set; }
     public DbSet<GitCommit> GitCommit { get; set; }
     public DbSet<GitPullRequest> GitPullRequest { get; set; }
     public DbSet<GitPullRequestReview> GitPullRequestReview { get; set; }
@@ -56,8 +56,6 @@ public class DataContext : DbContext
     public DbSet<IdentityExpandedMember> IdentityMemberExpanded { get; set; }
     public DbSet<ImportError> ImportError { get; set; }
     public DbSet<ImportState> ImportState { get; set; }
-    public DbSet<PipelineCurrent> PipelineCurrent { get; set; }
-    public DbSet<PipelineCurrentChange> PipelineCurrentChange { get; set; }
     public DbSet<Project> Project { get; set; }
 
 
@@ -116,22 +114,24 @@ public class DataContext : DbContext
     public DbSet<BuildIssue> BuildTimelineIssue { get; set; }
     public DbSet<BuildIssueData> BuildTimelineIssueData { get; set; }
     public DbSet<BuildTriggerInfo> BuildTriggerInfo { get; set; }
-    public DbSet<BuildYamlAnalysis> BuildYamlAnalysis { get; set; }
-    public DbSet<BuildYamlAnalysisFile> BuildYamlAnalysisFile { get; set; }
-    public DbSet<BuildYamlAnalysisPipelineEnvironmentRef> BuildYamlAnalysisPipelineEnvironmentRef { get; set; }
-    public DbSet<BuildYamlAnalysisPipelineEnvironmentUsage> BuildYamlAnalysisPipelineEnvironmentUsage { get; set; }
-    public DbSet<BuildYamlAnalysisServiceConnectionRef> BuildYamlAnalysisServiceConnectionRef { get; set; }
-    public DbSet<BuildYamlAnalysisServiceConnectionUsage> BuildYamlAnalysisServiceConnectionUsage { get; set; }
-    public DbSet<BuildYamlAnalysisSpecificVariableRef> BuildYamlAnalysisSpecificVariableRef { get; set; }
-    public DbSet<BuildYamlAnalysisSpecificVariableUsage> BuildYamlAnalysisSpecificVariableUsage { get; set; }
-    public DbSet<BuildYamlAnalysisVariableGroupRef> BuildYamlAnalysisVariableGroupRef { get; set; }
-    public DbSet<BuildYamlAnalysisVariableGroupUsage> BuildYamlAnalysisVariableGroupUsage { get; set; }
-    public DbSet<LatestPipeline> LatestPipeline { get; set; }
-    public DbSet<LatestPipelineDefaultRun> LatestPipelineDefaultRun { get; set; }
-    public DbSet<LatestPipelineTemplateImport> LatestPipelineTemplateImport { get; set; }
+    public DbSet<BuildRunExpandedYamlAnalysis> BuildRunExpandedYamlAnalysis { get; set; }
+    public DbSet<BuildRunExpandedYamlFile> BuildRunExpandedYamlFile { get; set; }
+    public DbSet<BuildRunExpandedYamlPipelineEnvironmentRef> BuildRunExpandedYamlEnvironmentRef { get; set; }
+    public DbSet<BuildRunExpandedYamlPipelineEnvironmentUsage> BuildRunExpandedYamlEnvironmentUsage { get; set; }
+    public DbSet<BuildRunExpandedYamlServiceConnectionRef> BuildRunExpandedYamlServiceConnectionRef { get; set; }
+    public DbSet<BuildRunExpandedYamlServiceConnectionUsage> BuildRunExpandedYamlServiceConnectionUsage { get; set; }
+    public DbSet<BuildRunExpandedYamlSpecificVariableRef> BuildRunExpandedYamlSpecificVariableRef { get; set; }
+    public DbSet<BuildRunExpandedYamlSpecificVariableUsage> BuildRunExpandedYamlSpecificVariableUsage { get; set; }
+    public DbSet<BuildRunExpandedYamlVariableGroupRef> BuildRunExpandedYamlVariableGroupRef { get; set; }
+    public DbSet<BuildRunExpandedYamlVariableGroupUsage> BuildRunExpandedYamlVariableGroupUsage { get; set; }
+    public DbSet<PipelineConfigurationYamlTemplateImport> PipelineConfigurationYamlTemplateImport { get; set; }
     public DbSet<Pipeline> Pipeline { get; set; }
+    public DbSet<PipelineCurrent> PipelineCurrent { get; set; }
     public DbSet<PipelineImport> PipelineImport { get; set; }
+    public DbSet<PipelineLatest> PipelineLatest { get; set; }
+    public DbSet<PipelineLatestDefaultBranchRun> PipelineLatestDefaultBranchRun { get; set; }
     public DbSet<PipelineRun> PipelineRun { get; set; }
+    public DbSet<PipelineRunImport> PipelineRunImport { get; set; }
     public DbSet<PipelineRunPipelineInfo> PipelineRunPipelineInfo { get; set; }
     public DbSet<PipelineRunRepositoryInfo> PipelineRunRepositoryInfo { get; set; }
     public DbSet<PipelineVariable> PipelineVariable { get; set; }
@@ -202,31 +202,20 @@ public class DataContext : DbContext
             .Property(x => x.Type)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<Definition>()
-            .Property(x => x.QueueStatus)
-            .AddEnumMaxLengthAndConversion();
-        modelBuilder.Entity<Definition>()
-            .Property(x => x.Type)
-            .AddEnumMaxLengthAndConversion();
-
         modelBuilder.Entity<Project>()
             .Property(u => u.State)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<BuildYamlAnalysis>()
+        modelBuilder.Entity<BuildRunExpandedYamlAnalysis>()
             .Property(u => u.State)
             .AddEnumMaxLengthAndConversion();
 
-        modelBuilder.Entity<BuildYamlAnalysisFile>()
+        modelBuilder.Entity<BuildRunExpandedYamlFile>()
             .Property(u => u.Status)
             .AddEnumMaxLengthAndConversion();
 
         modelBuilder.Entity<BuildImport>()
             .Property(u => u.ArtifactImportState)
-            .AddEnumMaxLengthAndConversion();
-
-        modelBuilder.Entity<BuildImport>()
-            .Property(u => u.PipelineRunImportState)
             .AddEnumMaxLengthAndConversion();
 
         modelBuilder.Entity<BuildImport>()
@@ -251,6 +240,10 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<PipelineRun>()
             .Property(u => u.State)
+            .AddEnumMaxLengthAndConversion();
+
+        modelBuilder.Entity<PipelineRunImport>()
+            .Property(u => u.PipelineRunImportState)
             .AddEnumMaxLengthAndConversion();
 
         modelBuilder.Entity<PipelineImport>()

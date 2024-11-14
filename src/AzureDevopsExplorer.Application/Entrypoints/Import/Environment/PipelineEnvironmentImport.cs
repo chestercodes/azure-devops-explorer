@@ -14,7 +14,7 @@ public class PipelineEnvironmentImport
 
     public PipelineEnvironmentImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -29,6 +29,8 @@ public class PipelineEnvironmentImport
 
     public async Task AddPipelineEnvironments()
     {
+        logger.LogInformation($"Running environments import");
+
         var pipelineEnvironmentResult = await dataContext.Queries.Environments.GetPipelineEnvironments();
         if (pipelineEnvironmentResult.IsT1)
         {
@@ -39,7 +41,7 @@ public class PipelineEnvironmentImport
         var existingIds = new List<int>();
         using (var db = dataContext.DataContextFactory.Create())
         {
-            existingIds = db.PipelineEnvironment.Select(x => x.Id).ToList();
+            existingIds = db.PipelineEnvironment.Where(x => x.ProjectId == dataContext.Project.ProjectId).Select(x => x.Id).ToList();
         }
 
         var pipelineEnvironments = pipelineEnvironmentResult.AsT0;

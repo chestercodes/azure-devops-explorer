@@ -1,4 +1,4 @@
-﻿using AzureDevopsExplorer.Database.Model.Pipelines;
+﻿using AzureDevopsExplorer.Database.Model.Core;
 
 namespace AzureDevopsExplorer.Database.Extensions;
 

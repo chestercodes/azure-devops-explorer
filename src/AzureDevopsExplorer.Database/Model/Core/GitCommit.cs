@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace AzureDevopsExplorer.Database.Model.Pipelines;
+namespace AzureDevopsExplorer.Database.Model.Core;
 
 public class GitCommit
 {

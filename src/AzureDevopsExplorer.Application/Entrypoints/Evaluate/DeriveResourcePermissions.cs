@@ -84,7 +84,7 @@ public class DeriveResourcePermissions
             ),
         SecurityNamespacePermissionResourceType.Build
     );
-        var pipelines = db.Definition.Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId)).ToList();
+        var pipelines = db.PipelineCurrent.Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId)).ToList();
         deriver.RunForResourceNamespace(db, resourceConfig, All, pipelines, []);
     }
 

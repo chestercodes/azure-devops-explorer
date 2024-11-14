@@ -9,7 +9,7 @@ using AzureDevopsExplorer.AzureDevopsApi.Client;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Neo4j;
 using Microsoft.Extensions.Logging;
-using AzureDevopsExplorer.Application.Entrypoints.Import.Historical;
+using AzureDevopsExplorer.Application.Entrypoints.Import.Graph;
 
 namespace AzureDevopsExplorer.UnitTests;
 
@@ -93,8 +93,8 @@ public class EntrypointTrigger
             //IdentityImport = true,
             PipelineEnvironmentImport = true,
             PipelinePermissionsImport = true,
-            PipelineRunImport = true,
-            PipelineRunTemplateImport = true,
+            PipelineImport = true,
+            PipelineConfigurationYamlTemplateImport = true,
             SecureFileImport = true,
             //SecurityNamespaceImport = true,
             //ServiceEndpointAddLatest = true,

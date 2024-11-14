@@ -17,7 +17,7 @@ public class PipelinePermissionsImport
 
     public PipelinePermissionsImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
         projectId = dataContext.Project.ProjectId;
@@ -61,6 +61,8 @@ public class PipelinePermissionsImport
 
     private async Task RunForEnvironment(int environmentId, DateTime importTime)
     {
+        logger.LogInformation($"Running pipeline permissions import for environment " + environmentId);
+
         using var db = dataContext.DataContextFactory.Create();
         var existingPermissions = db.PipelineEnvironmentPipelinePermission
             .Where(x => x.PipelineEnvironmentId == environmentId && x.ProjectId == projectId)

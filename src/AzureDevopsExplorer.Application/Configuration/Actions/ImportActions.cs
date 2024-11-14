@@ -22,12 +22,12 @@ public class ImportActions
                     Config = new ImportConfig
                     {
                         BuildAddArtifacts = true,
-                        BuildAddPipelineRun = true,
-                        BuildAddTimeline = true,
-                        BuildRunYamlAnalysis = true,
-                        PipelineCurrentImport = true,
                         PipelineRunImport = true,
-                        PipelineRunTemplateImport = true,
+                        BuildAddTimeline = true,
+                        BuildRunRuntimeExpandedYamlAnalysis = true,
+                        PipelineCurrentImport = true,
+                        PipelineImport = true,
+                        PipelineConfigurationYamlTemplateImport = true,
                     }.ToApplicationConfig()
                 },
                 new ImportAction
@@ -68,15 +68,9 @@ public class ImportActions
                 },
                 new ImportAction
                 {
-                    Command = "build-add-pipeline-run",
-                    Info = "Add pipeline run for builds.",
-                    Config = new ImportConfig { BuildAddPipelineRun = true }.ToApplicationConfig()
-                },
-                new ImportAction
-                {
                     Command = "build-run-yaml-analysis",
                     Info = "Add analysis of expanded yaml file to get the used service connections and variable groups.",
-                    Config = new ImportConfig { BuildRunYamlAnalysis = true }.ToApplicationConfig()
+                    Config = new ImportConfig { BuildRunRuntimeExpandedYamlAnalysis = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {
@@ -141,8 +135,20 @@ public class ImportActions
                 new ImportAction
                 {
                     Command = "identity-import",
-                    Info = "Add identity.",
+                    Info = "Run identity import, assumes that entities have been loaded into table.",
                     Config = new ImportConfig { IdentityImport = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
+                    Command = "identity-entities-import",
+                    Info = "Add users, groups and service principals then full identity import.",
+                    Config = new ImportConfig
+                    {
+                        GraphAddGroups = true,
+                        GraphAddServicePrincipals = true,
+                        GraphAddUsers = true,
+                        IdentityImport = true
+                    }.ToApplicationConfig()
                 },
                 new ImportAction
                 {
@@ -164,15 +170,21 @@ public class ImportActions
                 },
                 new ImportAction
                 {
+                    Command = "pipeline-import",
+                    Info = "Add pipeline configuration information.",
+                    Config = new ImportConfig { PipelineImport = true }.ToApplicationConfig()
+                },
+                new ImportAction
+                {
                     Command = "pipeline-run-import",
-                    Info = "Add pipeline run information.",
+                    Info = "Add pipeline run for builds.",
                     Config = new ImportConfig { PipelineRunImport = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {
-                    Command = "pipeline-run-template-import",
-                    Info = "Add pipeline run template information.",
-                    Config = new ImportConfig { PipelineRunTemplateImport = true }.ToApplicationConfig()
+                    Command = "pipeline-yaml-template-import",
+                    Info = "Add pipeline yaml template information.",
+                    Config = new ImportConfig { PipelineConfigurationYamlTemplateImport = true }.ToApplicationConfig()
                 },
                 new ImportAction
                 {

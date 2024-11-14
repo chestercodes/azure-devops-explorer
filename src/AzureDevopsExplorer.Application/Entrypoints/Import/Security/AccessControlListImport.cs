@@ -2,7 +2,6 @@
 using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Security;
 using AzureDevopsExplorer.Database;
-using AzureDevopsExplorer.Database.Model.Pipelines;
 using AzureDevopsExplorer.Database.Model.Security;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.Extensions.Logging;
@@ -17,7 +16,7 @@ public class AccessControlListImport
     public AccessControlListImport(AzureDevopsOrganisationDataContext dataContext)
     {
         queries = dataContext.Queries;
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
@@ -31,6 +30,8 @@ public class AccessControlListImport
 
     public async Task Import()
     {
+        logger.LogInformation($"Running access control import");
+
         var namespaceIds = new List<Guid>();
         using (var db = dataContext.DataContextFactory.Create())
         {
@@ -45,6 +46,8 @@ public class AccessControlListImport
 
     private async Task AddNamespaceAcls(Guid namespaceId, DateTime importTime)
     {
+        logger.LogDebug($"Running namespace '{namespaceId}'");
+
         using var db = dataContext.DataContextFactory.Create();
 
         var aclsResult = await queries.Security.GetAclsForNamespace(namespaceId);

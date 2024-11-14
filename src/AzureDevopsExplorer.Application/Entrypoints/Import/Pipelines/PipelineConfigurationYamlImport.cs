@@ -5,20 +5,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Import.Pipelines;
-public class LatestPipelineTemplate
+public class PipelineConfigurationYamlImport
 {
     private readonly ILogger logger;
     private readonly AzureDevopsProjectDataContext dataContext;
 
-    public LatestPipelineTemplate(AzureDevopsProjectDataContext dataContext)
+    public PipelineConfigurationYamlImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
     public async Task Run(ImportConfig config)
     {
-        if (config.PipelineRunTemplateImport)
+        if (config.PipelineConfigurationYamlTemplateImport)
         {
             await RunAddMissingPipelines();
             await RunForOlderAndMissing();
@@ -31,14 +31,14 @@ public class LatestPipelineTemplate
 
         var missingInTemplateImportsTable =
             from d in db.Pipeline
-            join p in db.LatestPipelineTemplateImport on d.Id equals p.PipelineId into g
+            join p in db.PipelineConfigurationYamlTemplateImport on d.Id equals p.PipelineId into g
             from p in g.DefaultIfEmpty()
             where p == null && d.ConfigurationType == "yaml"
             select new { id = d.Id, revision = d.Revision, type = d.ConfigurationType };
 
         foreach (var row in missingInTemplateImportsTable.ToList())
         {
-            db.LatestPipelineTemplateImport.Add(new LatestPipelineTemplateImport
+            db.PipelineConfigurationYamlTemplateImport.Add(new PipelineConfigurationYamlTemplateImport
             {
                 PipelineId = row.id,
                 PipelineRevision = row.revision,
@@ -54,11 +54,17 @@ public class LatestPipelineTemplate
 
         using (var db = dataContext.DataContextFactory.Create())
         {
-            var lastMonth = DateTimeOffset.UtcNow.AddMonths(-1);
-            var imports = db.LatestPipelineTemplateImport
-                .Where(x =>
-                    x.LastImport == null
-                //|| x.LastImport < lastMonth
+            var lastMonth = DateTime.UtcNow.AddMonths(-1);
+            var imports = db.PipelineConfigurationYamlTemplateImport
+                .Where(x => 
+                (x.LastImport == null || x.LastImport < lastMonth)
+                    &&
+                (x.ImportError == null)
+                    &&
+                    db.PipelineCurrent
+                        .Where(y => y.ProjectId == dataContext.Project.ProjectId)
+                        .Select(y => y.Id)
+                        .Contains(x.PipelineId)
                 )
                 .ToList()
                 .Select(x => new { pid = x.PipelineId, pr = x.PipelineRevision })
@@ -75,9 +81,11 @@ public class LatestPipelineTemplate
 
     private async Task RunForPipeline((int PipelineId, int PipelineRevision) pipeline, DateTime lastImportTime)
     {
+        logger.LogDebug($"Running pipeline config import " + pipeline.PipelineId);
+
         using var db = dataContext.DataContextFactory.Create();
 
-        var import = await db.LatestPipelineTemplateImport
+        var import = await db.PipelineConfigurationYamlTemplateImport
             .Where(x => x.PipelineId == pipeline.PipelineId && x.PipelineRevision == pipeline.PipelineRevision)
             .SingleAsync();
 
@@ -121,7 +129,7 @@ public class LatestPipelineTemplate
         },
         err =>
         {
-            import.ImportError = err.ToString();
+            import.ImportError = err.AsError;
         });
 
         db.SaveChanges();

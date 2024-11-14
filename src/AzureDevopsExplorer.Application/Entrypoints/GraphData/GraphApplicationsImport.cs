@@ -17,7 +17,7 @@ public class GraphApplicationsImport
     {
         this.graphClient = graphClient;
         this.dataContextFactory = dataContextFactory;
-        logger = loggerFactory.CreateLogger(GetType());
+        logger = loggerFactory.Create(this);
     }
 
     public async Task Run(ImportConfig config)

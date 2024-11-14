@@ -7,13 +7,11 @@ namespace AzureDevopsExplorer.Application.Entrypoints.Import.Pipelines;
 public class BuildsLatestDefaultFromPipeline
 {
     private readonly ILogger logger;
-    private readonly string projectName;
     private readonly AzureDevopsProjectDataContext dataContext;
 
     public BuildsLatestDefaultFromPipeline(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
-        projectName = dataContext.Project.ProjectName;
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
@@ -23,6 +21,8 @@ public class BuildsLatestDefaultFromPipeline
         {
             return;
         }
+
+        logger.LogInformation($"Running latest default pipeline import");
 
         List<int> pipelineIdsFromDb = new List<int>();
         using (var db = dataContext.DataContextFactory.Create())
@@ -42,11 +42,13 @@ public class BuildsLatestDefaultFromPipeline
 
     private async Task AddForPipelineRef(int pipelineId)
     {
+        logger.LogDebug("Running latest default pipeline import for {PipelineId}", pipelineId);
+
         var buildsResult = await dataContext.Queries.Build.GetPipelineBuildsQueueDescending(pipelineId);
         if (buildsResult.IsT1)
         {
             logger.LogError(buildsResult.AsT1.AsError);
-            throw new Exception();
+            return;
         }
 
         var builds = buildsResult.AsT0.value;

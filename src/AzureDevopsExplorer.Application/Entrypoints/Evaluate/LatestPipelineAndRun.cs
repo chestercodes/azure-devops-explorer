@@ -21,27 +21,18 @@ public class LatestPipelineAndRun
     {
         using var db = dataContextFactory.Create();
 
-        var latestPipelineAndRevisions = db.Definition
-            .GroupBy(dr => dr.Id)
-            .Select(group => new
-            {
-                Id = group.Key,
-                Revision = group.Max(dr => dr.Revision),
-            })
-            .ToList();
-
-        db.LatestPipeline.RemoveRange(db.LatestPipeline);
-        foreach (var row in latestPipelineAndRevisions.ToList())
+        db.PipelineLatest.RemoveRange(db.PipelineLatest);
+        foreach (var row in db.PipelineCurrent.ToList())
         {
-            var def = db.Definition.SingleOrDefault(x => x.Id == row.Id && x.Revision == row.Revision);
+            var def = db.Pipeline.SingleOrDefault(x => x.Id == row.Id && x.Revision == row.Revision);
             if (def != null)
             {
-                db.LatestPipeline.Add(new LatestPipeline
+                db.PipelineLatest.Add(new PipelineLatest
                 {
                     Id = def.Id,
                     Revision = def.Revision,
                     Name = def.Name,
-                    Path = def.Path,
+                    Folder = def.Folder,
                     ProjectId = def.ProjectId,
                 });
             }
@@ -91,10 +82,10 @@ public class LatestPipelineAndRun
             })
             .ToList();
 
-        db.LatestPipelineDefaultRun.RemoveRange(db.LatestPipelineDefaultRun);
+        db.PipelineLatestDefaultBranchRun.RemoveRange(db.PipelineLatestDefaultBranchRun);
         foreach (var item in lastBuildsWithEnvParameter)
         {
-            db.LatestPipelineDefaultRun.Add(new LatestPipelineDefaultRun
+            db.PipelineLatestDefaultBranchRun.Add(new PipelineLatestDefaultBranchRun
             {
                 Id = item.MaxId,
                 PipelineId = item.DefinitionId
@@ -102,7 +93,7 @@ public class LatestPipelineAndRun
         }
         foreach (var item in lastBuildsWithDefaultBranch)
         {
-            db.LatestPipelineDefaultRun.Add(new LatestPipelineDefaultRun
+            db.PipelineLatestDefaultBranchRun.Add(new PipelineLatestDefaultBranchRun
             {
                 Id = item.MaxId,
                 PipelineId = item.DefinitionId

@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
-[PrimaryKey(nameof(Id), nameof(Revision))]
-public class PipelineCurrent
+[PrimaryKey(nameof(Id))]
+public class PipelineLatest
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
@@ -12,6 +12,4 @@ public class PipelineCurrent
     public Guid ProjectId { get; set; }
     public string Name { get; set; }
     public string Folder { get; set; }
-
-    public DateTime? LastImport { get; set; }
 }

@@ -1,8 +1,5 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
-using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
-using AzureDevopsExplorer.Database.Model.Graph;
-using KellermanSoftware.CompareNetObjects;
 using Microsoft.Extensions.Logging;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Import.Graph;
@@ -15,7 +12,7 @@ public class GraphUserImport
 
     public GraphUserImport(AzureDevopsOrganisationDataContext orgDataContext)
     {
-        logger = orgDataContext.LoggerFactory.CreateLogger(GetType());
+        logger = orgDataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.orgDataContext = orgDataContext;
     }
@@ -31,6 +28,8 @@ public class GraphUserImport
 
     public async Task AddGraphUsers()
     {
+        logger.LogInformation($"Running graph users import");
+
         var graphUsersResult = await orgDataContext.Queries.Graph.GetUsers();
         if (graphUsersResult.IsT1)
         {
@@ -67,7 +66,7 @@ public class GraphUserImport
         db.IdentityImport.AddRange(
             subjectDescriptorsToAdd.Select(
                 subjectDescriptor =>
-                new Database.Model.Pipelines.IdentityImport
+                new Database.Model.Core.IdentityImport
                 {
                     SubjectDescriptor = subjectDescriptor,
                 }

@@ -17,7 +17,7 @@ public class PolicyConfigurationImport
     public PolicyConfigurationImport(AzureDevopsProjectDataContext dataContext)
     {
         mapper = new Mappers();
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
@@ -31,6 +31,8 @@ public class PolicyConfigurationImport
 
     public async Task Import()
     {
+        logger.LogInformation($"Running policy configuration import");
+
         var policyConfigsResult = await dataContext.Queries.Policy.GetAllPolicyConfigurations();
 
         if (policyConfigsResult.IsT1)

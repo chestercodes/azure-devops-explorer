@@ -14,7 +14,7 @@ public class ServiceEndpointImport
 
     public ServiceEndpointImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -29,6 +29,8 @@ public class ServiceEndpointImport
 
     public async Task AddServiceEndpoints()
     {
+        logger.LogInformation($"Running service endpoints import");
+
         // TODO? figure out whether to remove values which are not in API response
         // or whether we can't be sure that it's not being used by another project
         var serviceEndpointResult = await dataContext.Queries.ServiceEndpoints.GetServiceEndpoints();

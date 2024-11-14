@@ -1,4 +1,4 @@
-﻿namespace AzureDevopsExplorer.Database.Model.Pipelines;
+﻿namespace AzureDevopsExplorer.Database.Model.Core;
 
 public class IdentityChange
 {

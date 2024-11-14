@@ -13,7 +13,7 @@ public class BuildsAllCompletedFromStart
 
     public BuildsAllCompletedFromStart(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         projectName = dataContext.Project.ProjectName;
         this.dataContext = dataContext;
     }
@@ -25,6 +25,9 @@ public class BuildsAllCompletedFromStart
             return;
         }
 
+        logger.LogInformation($"Running all builds from start");
+
+
         var findNonExistingBuildIds = new FindNonExistingBuildIds(dataContext.DataContextFactory);
 
         var carryOn = true;
@@ -34,6 +37,8 @@ public class BuildsAllCompletedFromStart
         DateTime? queueTimeBeforeFirstNonCompletedBuild = lastQueueTime;
         if (config.PipelineIds.Count != 0)
         {
+            logger.LogDebug($"Running for pipelines " + string.Join(", ", config.PipelineIds));
+
             // only write to table if pipelines not specified
             queueTimeBeforeFirstNonCompletedBuild = null;
         }

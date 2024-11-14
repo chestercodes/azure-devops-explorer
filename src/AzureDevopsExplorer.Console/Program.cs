@@ -48,16 +48,15 @@ app.Run(
                     //AuditLogImport = true,
                     //AuditLogStartDate = DateTime.Now.AddDays(-1),
                     //BuildAddArtifacts = true,
-                    //BuildAddPipelineRun = true,
                     //BuildAddTimeline = true,
-                    //BuildRunYamlAnalysis = true,
+                    //BuildRunRuntimeExpandedYamlAnalysis = true,
                     //BuildsAddFromStart = true,
                     //BuildsAddLatestDefaultFromPipeline = true,
                     //CheckConfigurationImport = true,
                     //CodeSearchImport = true,
                     //GitAddPullRequests = true,
-                    GitAddRepositories = true,
-                    GitAddRepositoriesDefaultBranchCommits = true,
+                    //GitAddRepositories = true,
+                    //GitAddRepositoriesDefaultBranchCommits = true,
                     //GraphAddEntraApplications = true,
                     //GraphAddEntraGroups = true,
                     //GraphAddGroups = true,
@@ -66,21 +65,27 @@ app.Run(
                     //GraphAddUsers = true,
                     //IdentityImport = true,
                     //PipelineEnvironmentImport = true,
-                    //PipelineCurrentImport = true,
+                    PipelineCurrentImport = true,
                     //PipelineIds = [],
                     //PipelinePermissionsImport = true,
-                    //PipelineRunImport = true,
-                    //PipelineRunTemplateImport = true,
+                    PipelineImport = true,
+                    PipelineRunImport = true,
+                    PipelineConfigurationYamlTemplateImport = true,
+                    ProjectsImport = true,
                     //PolicyConfigurationImport = true,
                     //SecureFileImport = true,
-                    //SecurityNamespaceImport = true,
+                    SecurityNamespaceImport = true,
                     //ServiceEndpointAddHistory = true,
                     //ServiceEndpointAddLatest = true,
-                    //VariableGroupAddLatest = true,
+                    VariableGroupAddLatest = true,
                 },
                 ProcessConfig = new ProcessConfig
                 {
 
+                },
+                LoggingConfig = new LoggingConfig
+                {
+                    Verbose = true,
                 }
             };
             await run.WithApplicationConfig(testConfig, ctx.CancellationToken);

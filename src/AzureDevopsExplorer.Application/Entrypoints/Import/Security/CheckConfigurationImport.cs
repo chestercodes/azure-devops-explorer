@@ -16,7 +16,7 @@ public class CheckConfigurationImport
 
     public CheckConfigurationImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -31,6 +31,8 @@ public class CheckConfigurationImport
 
     public async Task AddCheckConfigurations()
     {
+        logger.LogInformation($"Running check configuration import");
+
         CheckConfigurationsQueryResource[] allCheckResources = null;
 
         using (var db = dataContext.DataContextFactory.Create())
@@ -73,7 +75,10 @@ public class CheckConfigurationImport
         var existingIds = new List<int>();
         using (var db = dataContext.DataContextFactory.Create())
         {
-            existingIds = db.CheckConfiguration.Select(x => x.Id).ToList();
+            existingIds = db.CheckConfiguration
+                .Where(x => x.ProjectId == dataContext.Project.ProjectId)
+                .Select(x => x.Id)
+                .ToList();
         }
 
         if (checkConfigs.value != null)
@@ -89,7 +94,7 @@ public class CheckConfigurationImport
 
     private async Task RemoveExistingNotPresentInApiResponse(DateTime lastImport, ListResponse<AzureDevopsApi.ApprovalsAndChecks.CheckConfiguration> checkConfigs, List<int> existingIds)
     {
-        var idsFromApi = checkConfigs.value.Select(x => x.id).ToList();
+        var idsFromApi = (checkConfigs.value ?? []).Select(x => x.id).ToList();
         var removed = existingIds.Except(idsFromApi);
         if (removed.Any())
         {
@@ -118,6 +123,7 @@ public class CheckConfigurationImport
     private void RunAddOrUpdate(AzureDevopsApi.ApprovalsAndChecks.CheckConfiguration check, DateTime lastImport)
     {
         var mapped = mapper.MapCheckConfiguration(check);
+        mapped.ProjectId = dataContext.Project.ProjectId;
         mapped.Settings = JsonSerializer.Serialize(check.settings);
         using var db = dataContext.DataContextFactory.Create();
         var currentCheck = db.CheckConfiguration.SingleOrDefault(x => x.Id == mapped.Id);

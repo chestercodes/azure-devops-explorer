@@ -10,6 +10,7 @@ public class Pipeline
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
     public int Revision { get; set; }
+    public Guid ProjectId { get; set; }
     [StringLength(Constants.PipelineNameLength)]
     public string? Name { get; set; }
     [StringLength(Constants.PipelineNameLength)]

@@ -1,6 +1,6 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.Database.Mappers;
-using AzureDevopsExplorer.Database.Model.Pipelines;
+using AzureDevopsExplorer.Database.Model.Core;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,7 +14,7 @@ public class IdentitiesImport
 
     public IdentitiesImport(AzureDevopsOrganisationDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
@@ -30,6 +30,8 @@ public class IdentitiesImport
 
     public async Task RunForOlderAndMissing(DateTime lastImport)
     {
+        logger.LogInformation($"Running identities import");
+
         var subjectDescriptors = await FindSubjectDescriptorsToImport();
         // fails with a 404 if the url is too long
         var batchSize = 30;
@@ -58,6 +60,8 @@ public class IdentitiesImport
 
     private async Task RunBatch(string[] subjectDescriptors, DateTime lastImport)
     {
+        logger.LogDebug($"Running identities batch of " + subjectDescriptors.Length);
+
         var identityFromApiResult = await dataContext.Queries.Core.GetIdentitiesBySubjectDescriptor(subjectDescriptors.ToList());
         if (identityFromApiResult.IsT1)
         {

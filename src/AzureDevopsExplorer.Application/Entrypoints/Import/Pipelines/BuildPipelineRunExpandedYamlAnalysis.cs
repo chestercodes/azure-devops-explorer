@@ -8,44 +8,43 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Import.Pipelines;
-public class BuildYamlAnalysis
+public class BuildPipelineRunExpandedYamlAnalysis
 {
     private readonly ILogger logger;
-    private readonly string projectName;
     private readonly AzureDevopsProjectDataContext dataContext;
-    private readonly int YamlProcessBatchSize = 500;
+    private readonly int YamlProcessBatchSize = 100;
 
-    public BuildYamlAnalysis(AzureDevopsProjectDataContext dataContext)
+    public BuildPipelineRunExpandedYamlAnalysis(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
-        projectName = dataContext.Project.ProjectName;
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
     public async Task Run(ImportConfig config)
     {
-        if (config.BuildRunYamlAnalysis)
+        if (config.BuildRunRuntimeExpandedYamlAnalysis)
         {
             await RunAddBuildRunIdsToTable();
             await RunAddBuildYaml();
-            await RunYamlAnalysis();
+            await RunYamlAnalysis(config);
         }
     }
 
     public async Task RunAddBuildRunIdsToTable()
     {
         using var db = dataContext.DataContextFactory.Create();
-
+        
+        var pipelinesIdsWhichUseYaml = db.Pipeline.Where(x => x.ConfigurationType == "yaml").Select(x => x.Id).Distinct();
         var missingInTable =
-            from b in db.BuildImport
-            join a in db.BuildYamlAnalysis on b.BuildRunId equals a.BuildRunId into g
+            from b in db.Build
+            join a in db.BuildRunExpandedYamlAnalysis on b.Id equals a.BuildRunId into g
             from p in g.DefaultIfEmpty()
-            where p == null
-            select new { id = b.BuildRunId, pipelineId = b.PipelineId, pipelineRevision = b.PipelineRevision };
+            where p == null && pipelinesIdsWhichUseYaml.Contains(b.DefinitionId)
+            select new { id = b.Id, pipelineId = b.DefinitionId, pipelineRevision = b.DefinitionRevision };
 
         foreach (var row in missingInTable)
         {
-            db.BuildYamlAnalysis.Add(new Database.Model.Pipelines.BuildYamlAnalysis
+            db.BuildRunExpandedYamlAnalysis.Add(new Database.Model.Pipelines.BuildRunExpandedYamlAnalysis
             {
                 BuildRunId = row.id,
                 PipelineId = row.pipelineId,
@@ -59,11 +58,18 @@ public class BuildYamlAnalysis
 
     public async Task RunAddBuildYaml()
     {
+        logger.LogInformation($"Running build yaml analysis import");
+
         using var db = dataContext.DataContextFactory.Create();
-        var unprocessedBuilds = db.BuildYamlAnalysis.Where(x => x.State == BuildYamlAnalysisState.Initial).ToList();
+        var pipelineIdsInProject = db.PipelineCurrent
+            .Where(x => x.ProjectId == dataContext.Project.ProjectId)
+            .Select(x => x.Id);
+        var unprocessedBuilds = db.BuildRunExpandedYamlAnalysis.Where(x => x.State == BuildYamlAnalysisState.Initial && pipelineIdsInProject.Contains(x.PipelineId)).ToList();
 
         foreach (var buildInfo in unprocessedBuilds)
         {
+            logger.LogDebug($"Running build yaml analysis import " + buildInfo.BuildRunId);
+
             var buildYamlLinesResult = await dataContext.Queries.Build.GetExpandedYaml(buildInfo.BuildRunId);
             if (buildYamlLinesResult.IsT1)
             {
@@ -80,9 +86,9 @@ public class BuildYamlAnalysis
             var buildYaml = buildYamlLinesResult.AsT0;
             var hash = GetMd5Hash(buildYaml);
 
-            if (db.BuildYamlAnalysisFile.Any(x => x.Hash == hash) == false)
+            if (db.BuildRunExpandedYamlFile.Any(x => x.Hash == hash) == false)
             {
-                db.BuildYamlAnalysisFile.Add(new BuildYamlAnalysisFile
+                db.BuildRunExpandedYamlFile.Add(new BuildRunExpandedYamlFile
                 {
                     Hash = hash,
                     Content = buildYaml,
@@ -97,14 +103,33 @@ public class BuildYamlAnalysis
         }
     }
 
-    public async Task RunYamlAnalysis()
+    public async Task RunYamlAnalysis(ImportConfig config)
     {
+        bool carryOn = UnprocessedFilesExist();
+        while (carryOn)
+        {
+            await RunYamlAnalysisBatch(config);
+            carryOn = UnprocessedFilesExist();
+        }
+    }
+
+    private bool UnprocessedFilesExist()
+    {
+        using (var db = dataContext.DataContextFactory.Create())
+        {
+            return db.BuildRunExpandedYamlFile.Any(x => x.Status == BuildYamlAnalysisFileStatus.NotProcessed);
+        }
+    }
+
+    private async Task RunYamlAnalysisBatch(ImportConfig config)
+    {
+        logger.LogInformation($"Running build yaml analysis batch");
         List<(string, OneOf<ParsedYamlFile, Exception>)> parseResults = new();
 
         using (var db = dataContext.DataContextFactory.Create())
         {
             var unprocessedFiles =
-                db.BuildYamlAnalysisFile.Where(x => x.Status == BuildYamlAnalysisFileStatus.NotProcessed)
+                db.BuildRunExpandedYamlFile.Where(x => x.Status == BuildYamlAnalysisFileStatus.NotProcessed)
                 .Take(YamlProcessBatchSize)
                 .ToList();
             var parser = new ParseYamlFile();
@@ -124,19 +149,19 @@ public class BuildYamlAnalysis
         Dictionary<string, int> variableRefs = new();
         using (var db = dataContext.DataContextFactory.Create())
         {
-            foreach (var pe in db.BuildYamlAnalysisPipelineEnvironmentRef.ToList())
+            foreach (var pe in db.BuildRunExpandedYamlEnvironmentRef.ToList())
             {
                 pipelineEnvironmentRefs.Add(pe.Name, pe.Id);
             }
-            foreach (var sc in db.BuildYamlAnalysisServiceConnectionRef.ToList())
+            foreach (var sc in db.BuildRunExpandedYamlServiceConnectionRef.ToList())
             {
                 serviceConnectionRefs.Add(sc.Name, sc.Id);
             }
-            foreach (var vg in db.BuildYamlAnalysisVariableGroupRef.ToList())
+            foreach (var vg in db.BuildRunExpandedYamlVariableGroupRef.ToList())
             {
                 variableGroupRefs.Add(vg.Name, vg.Id);
             }
-            foreach (var v in db.BuildYamlAnalysisSpecificVariableRef.ToList())
+            foreach (var v in db.BuildRunExpandedYamlSpecificVariableRef.ToList())
             {
                 variableRefs.Add(v.Name, v.Id);
             }
@@ -144,20 +169,20 @@ public class BuildYamlAnalysis
 
         foreach (var result in parseResults)
         {
-            AddEntities(pipelineEnvironmentRefs, serviceConnectionRefs, variableGroupRefs, variableRefs, result);
+            AddEntities(config, pipelineEnvironmentRefs, serviceConnectionRefs, variableGroupRefs, variableRefs, result);
         }
     }
 
-    private void AddEntities(Dictionary<string, int> pipelineEnvironmentRefs, Dictionary<string, int> serviceConnectionRefs, Dictionary<string, int> variableGroupRefs, Dictionary<string, int> variableRefs, (string, OneOf<ParsedYamlFile, Exception>) result)
+    private void AddEntities(ImportConfig config, Dictionary<string, int> pipelineEnvironmentRefs, Dictionary<string, int> serviceConnectionRefs, Dictionary<string, int> variableGroupRefs, Dictionary<string, int> variableRefs, (string, OneOf<ParsedYamlFile, Exception>) result)
     {
         var db = dataContext.DataContextFactory.Create();
-        var file = db.BuildYamlAnalysisFile.Single(x => x.Hash == result.Item1);
+        var file = db.BuildRunExpandedYamlFile.Single(x => x.Hash == result.Item1);
         result.Item2.Switch(parsedFile =>
         {
             foreach (var name in parsedFile.PipelineEnvironments.Select(x => x.Name).Distinct())
             {
                 var peId = pipelineEnvironmentRefs.ContainsKey(name) ? pipelineEnvironmentRefs[name] : throw new Exception($"Could not get ref for pipeline environment {name}");
-                db.BuildYamlAnalysisPipelineEnvironmentUsage.Add(new BuildYamlAnalysisPipelineEnvironmentUsage
+                db.BuildRunExpandedYamlEnvironmentUsage.Add(new BuildRunExpandedYamlPipelineEnvironmentUsage
                 {
                     FileHash = file.Hash,
                     PipelineEnvironmentRefId = peId
@@ -166,7 +191,7 @@ public class BuildYamlAnalysis
             foreach (var name in parsedFile.ServiceConnections.Select(x => x.Name).Distinct())
             {
                 var scId = serviceConnectionRefs.ContainsKey(name) ? serviceConnectionRefs[name] : throw new Exception($"Could not get ref for service connection {name}");
-                db.BuildYamlAnalysisServiceConnectionUsage.Add(new BuildYamlAnalysisServiceConnectionUsage
+                db.BuildRunExpandedYamlServiceConnectionUsage.Add(new BuildRunExpandedYamlServiceConnectionUsage
                 {
                     FileHash = file.Hash,
                     ServiceConnectionRefId = scId
@@ -175,7 +200,7 @@ public class BuildYamlAnalysis
             foreach (var name in parsedFile.VariableGroups.Select(x => x.Name).Distinct())
             {
                 var vgId = variableGroupRefs.ContainsKey(name) ? variableGroupRefs[name] : throw new Exception($"Could not get ref for variable group {name}");
-                db.BuildYamlAnalysisVariableGroupUsage.Add(new BuildYamlAnalysisVariableGroupUsage
+                db.BuildRunExpandedYamlVariableGroupUsage.Add(new BuildRunExpandedYamlVariableGroupUsage
                 {
                     FileHash = file.Hash,
                     VariableGroupRefId = vgId
@@ -184,11 +209,17 @@ public class BuildYamlAnalysis
             foreach (var name in parsedFile.SpecificVariables.Select(x => x.Name).Distinct())
             {
                 var vId = variableRefs.ContainsKey(name) ? variableRefs[name] : throw new Exception($"Could not get ref for variable {name}");
-                db.BuildYamlAnalysisSpecificVariableUsage.Add(new BuildYamlAnalysisSpecificVariableUsage
+                db.BuildRunExpandedYamlSpecificVariableUsage.Add(new BuildRunExpandedYamlSpecificVariableUsage
                 {
                     FileHash = file.Hash,
                     SpecificVariableRefId = vId
                 });
+            }
+
+            if (config.BuildRunYamlAnalysisKeepFileContents == false)
+            {
+                // the file contents take up more space than are worth
+                file.Content = "";
             }
 
             file.Status = BuildYamlAnalysisFileStatus.Ok;
@@ -209,14 +240,14 @@ public class BuildYamlAnalysis
             successfulFiles.SelectMany(x => x.PipelineEnvironments.Select(x => x.Name))
             .Distinct();
         var pipelineEnvironmentsAlreadyPresent =
-            db.BuildYamlAnalysisPipelineEnvironmentRef
+            db.BuildRunExpandedYamlEnvironmentRef
             .Where(x => distinctPipelineEnvironments.Contains(x.Name))
             .Select(x => x.Name)
             .ToList();
         var pipelineEnvironmentsToAdd = distinctPipelineEnvironments.Except(pipelineEnvironmentsAlreadyPresent);
         foreach (var pe in pipelineEnvironmentsToAdd)
         {
-            db.BuildYamlAnalysisPipelineEnvironmentRef.Add(new BuildYamlAnalysisPipelineEnvironmentRef
+            db.BuildRunExpandedYamlEnvironmentRef.Add(new BuildRunExpandedYamlPipelineEnvironmentRef
             {
                 Name = pe
             });
@@ -226,14 +257,14 @@ public class BuildYamlAnalysis
             successfulFiles.SelectMany(x => x.ServiceConnections.Select(x => x.Name))
             .Distinct();
         var serviceConnectionsAlreadyPresent =
-            db.BuildYamlAnalysisServiceConnectionRef
+            db.BuildRunExpandedYamlServiceConnectionRef
             .Where(x => distinctServiceConnections.Contains(x.Name))
             .Select(x => x.Name)
             .ToList();
         var serviceConnectionsToAdd = distinctServiceConnections.Except(serviceConnectionsAlreadyPresent);
         foreach (var sc in serviceConnectionsToAdd)
         {
-            db.BuildYamlAnalysisServiceConnectionRef.Add(new BuildYamlAnalysisServiceConnectionRef
+            db.BuildRunExpandedYamlServiceConnectionRef.Add(new BuildRunExpandedYamlServiceConnectionRef
             {
                 Name = sc
             });
@@ -243,14 +274,14 @@ public class BuildYamlAnalysis
             successfulFiles.SelectMany(x => x.VariableGroups.Select(x => x.Name))
             .Distinct();
         var variableGroupsAlreadyPresent =
-            db.BuildYamlAnalysisVariableGroupRef
+            db.BuildRunExpandedYamlVariableGroupRef
             .Where(x => distinctVariableGroups.Contains(x.Name))
             .Select(x => x.Name)
             .ToList();
         var variableGroupsToAdd = distinctVariableGroups.Except(variableGroupsAlreadyPresent);
         foreach (var vg in variableGroupsToAdd)
         {
-            db.BuildYamlAnalysisVariableGroupRef.Add(new BuildYamlAnalysisVariableGroupRef
+            db.BuildRunExpandedYamlVariableGroupRef.Add(new BuildRunExpandedYamlVariableGroupRef
             {
                 Name = vg
             });
@@ -260,14 +291,14 @@ public class BuildYamlAnalysis
             successfulFiles.SelectMany(x => x.SpecificVariables.Select(x => x.Name))
             .Distinct();
         var variablesAlreadyPresent =
-            db.BuildYamlAnalysisSpecificVariableRef
+            db.BuildRunExpandedYamlSpecificVariableRef
             .Where(x => distinctVariables.Contains(x.Name))
             .Select(x => x.Name)
             .ToList();
         var variablesToAdd = distinctVariables.Except(variablesAlreadyPresent);
         foreach (var v in variablesToAdd)
         {
-            db.BuildYamlAnalysisSpecificVariableRef.Add(new BuildYamlAnalysisSpecificVariableRef
+            db.BuildRunExpandedYamlSpecificVariableRef.Add(new BuildRunExpandedYamlSpecificVariableRef
             {
                 Name = v
             });

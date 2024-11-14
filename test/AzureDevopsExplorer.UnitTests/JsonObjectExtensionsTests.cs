@@ -1,6 +1,4 @@
 ﻿using AzureDevopsExplorer.AzureDevopsApi;
-using AzureDevopsExplorer.Neo4j;
-using AzureDevopsExplorer.Neo4j.NodeLoaders;
 using System.Text.Json;
 
 namespace AzureDevopsExplorer.UnitTests;

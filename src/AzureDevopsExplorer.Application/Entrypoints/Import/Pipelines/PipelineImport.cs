@@ -1,4 +1,5 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.AzureDevopsApi.Pipelines;
 using AzureDevopsExplorer.Database.Extensions;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Pipelines;
@@ -14,14 +15,14 @@ public class PipelineImportCmd
 
     public PipelineImportCmd(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
 
     public async Task Run(ImportConfig config)
     {
-        if (config.PipelineRunImport)
+        if (config.PipelineImport)
         {
             await RunAddMissingPipelinesToImport();
             await RunDownloadPipeline();
@@ -59,7 +60,13 @@ public class PipelineImportCmd
         using (var db = dataContext.DataContextFactory.Create())
         {
             var imports = await db.PipelineImport
-                .Where(x => x.PipelineImportState == PipelineImportState.Initial)
+                .Where(
+                    x => x.PipelineImportState == PipelineImportState.Initial &&
+                        db.PipelineCurrent
+                        .Where(y => y.ProjectId == dataContext.Project.ProjectId)
+                        .Select(y => y.Id)
+                        .Contains(x.PipelineId)
+                )
                 .Select(x => new { pipelineId = x.PipelineId, pipelineRevision = x.PipelineRevision })
                 .ToListAsync();
             pipelineImports = imports.Select(x => (x.pipelineId, x.pipelineRevision)).ToList();
@@ -73,6 +80,8 @@ public class PipelineImportCmd
 
     private async Task RunForPipelineId(int pipelineId, int pipelineRevision)
     {
+        logger.LogDebug($"Running pipeline import " + pipelineId);
+
         using var db = dataContext.DataContextFactory.Create();
 
         var pipelineImport = await db.PipelineImport.Where(x => x.PipelineId == pipelineId && x.PipelineRevision == pipelineRevision).SingleOrDefaultAsync();
@@ -81,19 +90,30 @@ public class PipelineImportCmd
             var pipelineResult = await dataContext.Queries.Pipelines.GetPipeline(pipelineId, pipelineRevision);
             pipelineResult.Switch(pipeline =>
             {
-                var pipelineYaml = mapper.MapPipeline(pipeline);
-                db.Pipeline.Add(pipelineYaml);
-
-                foreach (var variable in pipeline?.configuration?.variables ?? [])
+                if (pipeline.IsT0)
                 {
-                    db.PipelineVariable.Add(new PipelineVariable
+                    var pipelineYamlFromApi = pipeline.AsT0;
+                    var pipelineYaml = mapper.MapPipelineYaml(pipelineYamlFromApi);
+                    pipelineYaml.ProjectId = dataContext.Project.ProjectId;
+                    db.Pipeline.Add(pipelineYaml);
+
+                    foreach (var variable in pipelineYamlFromApi?.configuration?.variables ?? [])
                     {
-                        PipelineId = pipelineId,
-                        PipelineRevision = pipelineRevision,
-                        Name = variable.Key,
-                        Value = variable.Value.value,
-                        IsSecret = variable.Value.isSecret,
-                    });
+                        db.PipelineVariable.Add(new PipelineVariable
+                        {
+                            PipelineId = pipelineId,
+                            PipelineRevision = pipelineRevision,
+                            Name = variable.Key,
+                            Value = variable.Value.value,
+                            IsSecret = variable.Value.isSecret,
+                        });
+                    }
+                }
+                else
+                {
+                    var pipelineSimple = mapper.MapPipelineSimple(pipeline.AsT1);
+                    pipelineSimple.ProjectId = dataContext.Project.ProjectId;
+                    db.Pipeline.Add(pipelineSimple);
                 }
 
                 pipelineImport.PipelineImportState = PipelineImportState.Done;

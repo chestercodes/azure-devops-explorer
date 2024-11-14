@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AzureDevopsExplorer.Database.Model.Pipelines;
+namespace AzureDevopsExplorer.Database.Model.Core;
 
 [PrimaryKey(nameof(Id))]
 public class Identity

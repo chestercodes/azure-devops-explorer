@@ -5,23 +5,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
 [PrimaryKey(nameof(BuildRunId))]
-public class BuildImport
+public class BuildRunExpandedYamlAnalysis
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int BuildRunId { get; set; }
     public int PipelineId { get; set; }
     public int? PipelineRevision { get; set; }
-    public BuildImportState ArtifactImportState { get; set; }
+    //public string? PipelineName { get; set; }
+    public BuildYamlAnalysisState State { get; set; }
     [StringLength(32)]
-    public string? ArtifactImportErrorHash { get; set; }
-    public BuildImportState TimelineImportState { get; set; }
-    [StringLength(32)]
-    public string? TimelineImportErrorHash { get; set; }
+    public string? BuildYamlHash { get; set; }
 }
 
-public enum BuildImportState
+public enum BuildYamlAnalysisState
 {
     Initial,
-    Done,
+    GotYaml,
     ErrorFromApi
 }

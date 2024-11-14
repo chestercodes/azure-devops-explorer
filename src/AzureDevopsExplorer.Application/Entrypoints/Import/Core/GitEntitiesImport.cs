@@ -1,6 +1,6 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.Database.Mappers;
-using AzureDevopsExplorer.Database.Model.Pipelines;
+using AzureDevopsExplorer.Database.Model.Core;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.Extensions.Logging;
 
@@ -14,7 +14,7 @@ public class GitEntitiesImport
 
     public GitEntitiesImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         projectId = dataContext.Project.ProjectId;
         mapper = new Mappers();
         this.dataContext = dataContext;
@@ -38,6 +38,8 @@ public class GitEntitiesImport
 
     public async Task RunAddGitRepositories()
     {
+        logger.LogInformation($"Running git repository import");
+
         var importTime = DateTime.UtcNow;
         using var db = dataContext.DataContextFactory.Create();
 
@@ -45,14 +47,14 @@ public class GitEntitiesImport
         if (reposResult.IsT1)
         {
             logger.LogError(reposResult.AsT1.AsError);
-            throw new Exception();
+            return;
         }
 
         var repos = reposResult.AsT0.value;
         var reposFromApi = repos.Select(x =>
         {
             var m = mapper.MapGitRepository(x);
-            m.ProjectReferenceId = dataContext.Project.ProjectId;
+            m.ProjectReferenceId = projectId;
             m.LastImport = importTime;
             return m;
         });
@@ -111,19 +113,22 @@ public class GitEntitiesImport
 
     public async Task RunAddPullRequests()
     {
+        logger.LogInformation($"Running git pull requests import");
         using var db = dataContext.DataContextFactory.Create();
         var existingRepoIds = db.GitRepository
-            .Where(x => x.ProjectReferenceId == dataContext.Project.ProjectId)
+            .Where(x => x.ProjectReferenceId == projectId)
             .Select(x => x.Id)
             .ToList();
 
         foreach (var repoId in existingRepoIds)
         {
+            logger.LogDebug($"Running git pull requests import " + repoId);
+
             var prsResult = await dataContext.Queries.Git.GetAllPullRequestsForRepository(repoId.ToString());
             if (prsResult.IsT1)
             {
                 logger.LogError(prsResult.AsT1.AsError);
-                throw new Exception();
+                continue;
             }
             var prs = prsResult.AsT0.value;
 
@@ -193,17 +198,19 @@ public class GitEntitiesImport
     {
         using var db = dataContext.DataContextFactory.Create();
         var existingRepos = db.GitRepository
-            .Where(x => x.ProjectReferenceId == dataContext.Project.ProjectId)
+            .Where(x => x.ProjectReferenceId == projectId)
             .Select(x => new { x.Id, x.DefaultBranch })
             .ToList();
 
         foreach (var repo in existingRepos)
         {
+            logger.LogDebug($"Running git default branch commits import " + repo.Id);
+
             var commitsResult = await dataContext.Queries.Git.GetBranchCommitsForRepository(repo.Id.ToString(), repo.DefaultBranch);
             if (commitsResult.IsT1)
             {
                 logger.LogError(commitsResult.AsT1.AsError);
-                throw new Exception();
+                return;
             }
             var commits = commitsResult.AsT0.value;
 
@@ -212,7 +219,7 @@ public class GitEntitiesImport
                 var gitCommit = mapper.MapGitCommit(commit);
                 gitCommit.RepositoryId = repo.Id;
 
-                if(db.GitCommit.Any(x => x.CommitId == commit.commitId) == false)
+                if (db.GitCommit.Any(x => x.CommitId == commit.commitId) == false)
                 {
                     db.GitCommit.Add(gitCommit);
                 }

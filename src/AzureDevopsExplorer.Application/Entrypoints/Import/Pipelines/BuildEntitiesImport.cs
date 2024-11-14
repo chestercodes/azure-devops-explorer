@@ -10,13 +10,13 @@ public class BuildEntitiesImport
 
     public BuildEntitiesImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 
     public async Task Run(ImportConfig config)
     {
-        if (config.BuildAddArtifacts || config.BuildAddTimeline || config.BuildAddPipelineRun)
+        if (config.BuildAddArtifacts || config.BuildAddTimeline)
         {
             await RunAddMissingBuildsToImport();
         }
@@ -29,11 +29,6 @@ public class BuildEntitiesImport
         if (config.BuildAddTimeline)
         {
             await RunAddBuildTimeline();
-        }
-
-        if (config.BuildAddPipelineRun)
-        {
-            await RunAddPipelineRun();
         }
     }
 
@@ -57,8 +52,6 @@ public class BuildEntitiesImport
                 PipelineRevision = row.pipelineRevision,
                 ArtifactImportErrorHash = null,
                 ArtifactImportState = Database.Model.Pipelines.BuildImportState.Initial,
-                PipelineRunImportErrorHash = null,
-                PipelineRunImportState = Database.Model.Pipelines.BuildImportState.Initial,
                 TimelineImportErrorHash = null,
                 TimelineImportState = Database.Model.Pipelines.BuildImportState.Initial
             });
@@ -69,6 +62,8 @@ public class BuildEntitiesImport
 
     public async Task RunAddBuildArtifacts()
     {
+        logger.LogInformation($"Running build artifact import");
+
         List<int> buildIds = new();
         using (var db = dataContext.DataContextFactory.Create())
         {
@@ -91,6 +86,8 @@ public class BuildEntitiesImport
 
     private async Task AddBuildArtifacts(int buildId)
     {
+        logger.LogDebug($"Running build artifact import for " + buildId);
+
         using var db = dataContext.DataContextFactory.Create();
         var build = db.BuildImport.Where(x => x.BuildRunId == buildId).Single();
         var buildArtifactsResult = await dataContext.Queries.Build.GetArtifacts(build.BuildRunId);
@@ -110,6 +107,8 @@ public class BuildEntitiesImport
 
     public async Task RunAddBuildTimeline()
     {
+        logger.LogInformation($"Running build timeline import");
+
         List<int> buildIds = new();
         using (var db = dataContext.DataContextFactory.Create())
         {
@@ -132,6 +131,8 @@ public class BuildEntitiesImport
 
     private async Task AddTimeline(int buildId)
     {
+        logger.LogDebug($"Running build timeline import for " + buildId);
+
         using var db = dataContext.DataContextFactory.Create();
         var build = db.BuildImport.Where(x => x.BuildRunId == buildId).Single();
         var buildTimelineResult = await dataContext.Queries.Build.GetTimeline(buildId);
@@ -151,56 +152,5 @@ public class BuildEntitiesImport
 
         build.TimelineImportState = Database.Model.Pipelines.BuildImportState.Done;
         await db.SaveChangesAsync();
-    }
-
-    public async Task RunAddPipelineRun()
-    {
-        List<(int PipelineId, int BuildId)> pipelineAndBuildIds = new();
-        using (var db = dataContext.DataContextFactory.Create())
-        {
-            var buildsToImport =
-                db.BuildImport
-                    .Where(x => x.PipelineRunImportState == Database.Model.Pipelines.BuildImportState.Initial)
-                    .Join(
-                        db.PipelineCurrent.Where(x => x.ProjectId == dataContext.Project.ProjectId),
-                        b => b.PipelineId,
-                        p => p.Id,
-                        (b, p) => new { PipelineId = p.Id, BuildId = b.BuildRunId })
-                    .ToList();
-            pipelineAndBuildIds = buildsToImport.Select(x => (x.PipelineId, x.BuildId)).ToList();
-        }
-
-        foreach (var ids in pipelineAndBuildIds)
-        {
-            await AddPipelineRun(ids);
-        }
-    }
-
-    private async Task AddPipelineRun((int PipelineId, int BuildId) ids)
-    {
-        using var db = dataContext.DataContextFactory.Create();
-        var build = db.BuildImport.Where(x => x.BuildRunId == ids.BuildId).Single();
-        var pipelineRunResult = await dataContext.Queries.Pipelines.GetPipelineRun(ids.PipelineId, ids.BuildId);
-        pipelineRunResult.Switch(pipelineRun =>
-        {
-            if (pipelineRun == null)
-            {
-                build.PipelineRunImportState = Database.Model.Pipelines.BuildImportState.ErrorFromApi;
-                var errorHash = db.AddImportError("Pipeline run is null!!!");
-                build.PipelineRunImportErrorHash = errorHash;
-            }
-            else
-            {
-                db.AddPipelineRun(pipelineRun);
-                build.PipelineRunImportState = Database.Model.Pipelines.BuildImportState.Done;
-            }
-            db.SaveChanges();
-        }, err =>
-        {
-            build.PipelineRunImportState = Database.Model.Pipelines.BuildImportState.ErrorFromApi;
-            var errorHash = db.AddImportError(err.AsError);
-            build.PipelineRunImportErrorHash = errorHash;
-            db.SaveChanges();
-        });
     }
 }

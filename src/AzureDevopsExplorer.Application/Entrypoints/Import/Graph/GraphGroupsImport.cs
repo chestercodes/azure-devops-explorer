@@ -12,7 +12,7 @@ public class GraphGroupsImport
 
     public GraphGroupsImport(AzureDevopsOrganisationDataContext orgDataContext)
     {
-        logger = orgDataContext.LoggerFactory.CreateLogger(GetType());
+        logger = orgDataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.orgDataContext = orgDataContext;
     }
@@ -28,6 +28,8 @@ public class GraphGroupsImport
 
     public async Task AddGraphGroups()
     {
+        logger.LogInformation($"Running graph groups import");
+
         var graphGroupsResult = await orgDataContext.Queries.Graph.GetGroups();
         if (graphGroupsResult.IsT1)
         {
@@ -64,7 +66,7 @@ public class GraphGroupsImport
         db.IdentityImport.AddRange(
             subjectDescriptorsToAdd.Select(
                 subjectDescriptor =>
-                new Database.Model.Pipelines.IdentityImport
+                new Database.Model.Core.IdentityImport
                 {
                     SubjectDescriptor = subjectDescriptor,
                 }

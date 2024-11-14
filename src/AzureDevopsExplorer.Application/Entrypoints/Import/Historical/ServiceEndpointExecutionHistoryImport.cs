@@ -13,7 +13,7 @@ public class ServiceEndpointExecutionHistoryImport
 
     public ServiceEndpointExecutionHistoryImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }

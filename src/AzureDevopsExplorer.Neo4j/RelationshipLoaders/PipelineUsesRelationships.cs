@@ -16,12 +16,12 @@ public class PipelineUsesRelationships : ILoadRelationshipsToNeo4J
     private async Task AddPipelineToServiceConnectionRelationships(Neo4jLoader loader, DataContext db)
     {
         var result =
-            db.LatestPipelineDefaultRun
-            .Join(db.LatestPipeline, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
-            .Join(db.BuildYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
-            .Join(db.BuildYamlAnalysisFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
-            .Join(db.BuildYamlAnalysisServiceConnectionUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
-            .Join(db.BuildYamlAnalysisServiceConnectionRef, combined => combined.byasc.ServiceConnectionRefId, byascr => byascr.Id, (combined, byascr) => new
+            db.PipelineLatestDefaultBranchRun
+            .Join(db.PipelineLatest, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
+            .Join(db.BuildRunExpandedYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
+            .Join(db.BuildRunExpandedYamlFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
+            .Join(db.BuildRunExpandedYamlServiceConnectionUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
+            .Join(db.BuildRunExpandedYamlServiceConnectionRef, combined => combined.byasc.ServiceConnectionRefId, byascr => byascr.Id, (combined, byascr) => new
             {
                 PipelineId = combined.combined.combined.combined.lpr.PipelineId,
                 ServiceConnectionName = byascr.Name
@@ -50,12 +50,12 @@ public class PipelineUsesRelationships : ILoadRelationshipsToNeo4J
     private async Task AddPipelineToVariableGroupRelationships(Neo4jLoader loader, DataContext db)
     {
         var result =
-            db.LatestPipelineDefaultRun
-            .Join(db.LatestPipeline, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
-            .Join(db.BuildYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
-            .Join(db.BuildYamlAnalysisFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
-            .Join(db.BuildYamlAnalysisVariableGroupUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
-            .Join(db.BuildYamlAnalysisVariableGroupRef, combined => combined.byasc.VariableGroupRefId, byascr => byascr.Id, (combined, byascr) => new
+            db.PipelineLatestDefaultBranchRun
+            .Join(db.PipelineLatest, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
+            .Join(db.BuildRunExpandedYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
+            .Join(db.BuildRunExpandedYamlFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
+            .Join(db.BuildRunExpandedYamlVariableGroupUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
+            .Join(db.BuildRunExpandedYamlVariableGroupRef, combined => combined.byasc.VariableGroupRefId, byascr => byascr.Id, (combined, byascr) => new
             {
                 PipelineId = combined.combined.combined.combined.lpr.PipelineId,
                 VariableGroupName = byascr.Name
@@ -84,12 +84,12 @@ public class PipelineUsesRelationships : ILoadRelationshipsToNeo4J
     private async Task AddPipelineToPipelineEnvironmentRelationships(Neo4jLoader loader, DataContext db)
     {
         var result =
-            db.LatestPipelineDefaultRun
-            .Join(db.LatestPipeline, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
-            .Join(db.BuildYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
-            .Join(db.BuildYamlAnalysisFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
-            .Join(db.BuildYamlAnalysisPipelineEnvironmentUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
-            .Join(db.BuildYamlAnalysisPipelineEnvironmentRef, combined => combined.byasc.PipelineEnvironmentRefId, byascr => byascr.Id, (combined, byascr) => new
+            db.PipelineLatestDefaultBranchRun
+            .Join(db.PipelineLatest, lpr => lpr.PipelineId, lp => lp.Id, (lpr, lp) => new { lpr, lp })
+            .Join(db.BuildRunExpandedYamlAnalysis, combined => combined.lpr.Id, bya => bya.BuildRunId, (combined, bya) => new { combined, bya })
+            .Join(db.BuildRunExpandedYamlFile, combined => combined.bya.BuildYamlHash, byaf => byaf.Hash, (combined, byaf) => new { combined, byaf })
+            .Join(db.BuildRunExpandedYamlEnvironmentUsage, combined => combined.byaf.Hash, byasc => byasc.FileHash, (combined, byasc) => new { combined, byasc })
+            .Join(db.BuildRunExpandedYamlEnvironmentRef, combined => combined.byasc.PipelineEnvironmentRefId, byascr => byascr.Id, (combined, byascr) => new
             {
                 PipelineId = combined.combined.combined.combined.lpr.PipelineId,
                 PipelineEnvironmentId = byascr.Id,

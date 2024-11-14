@@ -16,7 +16,7 @@ public class AuditLogImport
 
     public AuditLogImport(AzureDevopsOrganisationDataContext orgDataContext)
     {
-        logger = orgDataContext.LoggerFactory.CreateLogger(GetType());
+        logger = orgDataContext.LoggerFactory.Create(this);
         this.orgDataContext = orgDataContext;
         mapper = new Mappers();
     }
@@ -77,6 +77,8 @@ public class AuditLogImport
 
     public async Task AddAuditLogDates(DateTime? initialDateFromCli = null)
     {
+        logger.LogInformation($"Running audit log import add dates");
+
         using var db = orgDataContext.DataContextFactory.Create();
 
         var existing = db.AuditLogImport.ToList()
@@ -94,6 +96,8 @@ public class AuditLogImport
     }
     public async Task AddAuditLog()
     {
+        logger.LogInformation($"Running audit log import");
+
         var datesToRun = new List<AuditLogImportTimePairing>();
         using (var db = orgDataContext.DataContextFactory.Create())
         {
@@ -112,6 +116,8 @@ public class AuditLogImport
 
     private async Task RunForDate(AuditLogImportTimePairing dates)
     {
+        logger.LogDebug($"Running audit log import between {dates.StartTime} -> {dates.EndTime}");
+
         using var db = orgDataContext.DataContextFactory.Create();
         var importRow = db.AuditLogImport.Single(x => x.StartTime == dates.StartTime);
         try

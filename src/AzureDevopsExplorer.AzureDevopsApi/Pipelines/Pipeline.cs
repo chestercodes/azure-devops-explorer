@@ -1,8 +1,23 @@
 ﻿namespace AzureDevopsExplorer.AzureDevopsApi.Pipelines;
 
+public class PipelineSimple
+{
+    public PipelineSimpleConfiguration? configuration { get; set; }
+    public string? url { get; set; }
+    public int id { get; set; }
+    public int? revision { get; set; }
+    public string? name { get; set; }
+    public string? folder { get; set; }
+}
+
+public class PipelineSimpleConfiguration
+{
+    public string? type { get; set; }
+}
+
 public class PipelineYaml
 {
-    public Dictionary<string, Link>? _links { get; set; }
+    //public Dictionary<string, Link>? _links { get; set; }
     public PipelineYamlConfiguration? configuration { get; set; }
     public string? url { get; set; }
     public int id { get; set; }

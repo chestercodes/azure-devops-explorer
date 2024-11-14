@@ -11,6 +11,9 @@ public class RunImport
 {
     public async Task RunOrganisationEntityImport(ImportConfig config, AzureDevopsOrganisationDataContext dataContext)
     {
+        var projectImport = new ProjectsImport(dataContext);
+        await projectImport.Run(config);
+
         var agentPoolImport = new AgentPoolImport(dataContext);
         await agentPoolImport.Run(config);
 
@@ -41,7 +44,7 @@ public class RunImport
         var policyConfigurationImport = new PolicyConfigurationImport(dataContext);
         await policyConfigurationImport.Run(config);
 
-        var pipelinesImport = new PipelinesImport(dataContext);
+        var pipelinesImport = new CurrentPipelinesImport(dataContext);
         await pipelinesImport.Run(config);
 
         var addLatestBuilds = new BuildsLatestDefaultFromPipeline(dataContext);
@@ -53,7 +56,10 @@ public class RunImport
         var buildEntitiesImport = new BuildEntitiesImport(dataContext);
         await buildEntitiesImport.Run(config);
 
-        var buildYamlAnalysis = new BuildYamlAnalysis(dataContext);
+        var pipelineRunImport = new PipelineRunImport(dataContext);
+        await pipelineRunImport.Run(config);
+
+        var buildYamlAnalysis = new BuildPipelineRunExpandedYamlAnalysis(dataContext);
         await buildYamlAnalysis.Run(config);
 
         var gitEntitiesImport = new GitEntitiesImport(dataContext);
@@ -62,7 +68,7 @@ public class RunImport
         var pipelineImportCmd = new PipelineImportCmd(dataContext);
         await pipelineImportCmd.Run(config);
 
-        var latestPipelineTemplate = new LatestPipelineTemplate(dataContext);
+        var latestPipelineTemplate = new PipelineConfigurationYamlImport(dataContext);
         await latestPipelineTemplate.Run(config);
 
         var serviceEndpointImport = new ServiceEndpointImport(dataContext);

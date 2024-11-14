@@ -16,7 +16,7 @@ public class SecurityNamespacesImport
     public SecurityNamespacesImport(AzureDevopsOrganisationDataContext dataContext)
     {
         queries = dataContext.Queries;
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -31,6 +31,7 @@ public class SecurityNamespacesImport
 
     public async Task ImportSecurityNamespaces()
     {
+        logger.LogInformation($"Running security namespaces import");
         var securityNamespacesResult = await queries.Security.GetSecurityNamespaces();
         if (securityNamespacesResult.IsT1)
         {

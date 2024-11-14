@@ -17,7 +17,7 @@ public class CodeSearchImport
     {
         queries = dataContext.Queries;
         project = dataContext.Project;
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         this.dataContext = dataContext;
     }
 

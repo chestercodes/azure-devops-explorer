@@ -1,8 +1,6 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
 using AzureDevopsExplorer.AzureDevopsApi.DistributedTask;
-using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Mappers;
-using AzureDevopsExplorer.Database.Model.Pipelines;
 using AzureDevopsExplorer.Database.Model.Environment;
 using KellermanSoftware.CompareNetObjects;
 using Microsoft.Extensions.Logging;
@@ -16,7 +14,7 @@ public class VariableGroupImport
 
     public VariableGroupImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -31,6 +29,8 @@ public class VariableGroupImport
 
     public async Task ImportVariableGroups()
     {
+        logger.LogInformation($"Running variable group import");
+
         // TODO? figure out whether to remove values which are not in API response
         // or whether we can't be sure that it's not being used by another project
         var variableGroupResult = await dataContext.Queries.DistributedTask.GetVariableGroups();
@@ -52,6 +52,8 @@ public class VariableGroupImport
 
     private async Task AddVariableGroup(int id, DateTime importTime)
     {
+        logger.LogDebug($"Running variable group import " + id);
+
         using var db = dataContext.DataContextFactory.Create();
 
         var currentVariables = db.VariableGroupVariable.Where(x => x.VariableGroupId == id).ToList();

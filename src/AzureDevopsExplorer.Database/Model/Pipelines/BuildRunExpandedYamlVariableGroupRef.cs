@@ -1,6 +1,6 @@
 ﻿namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
-public class BuildYamlAnalysisSpecificVariableRef
+public class BuildRunExpandedYamlVariableGroupRef
 {
     public int Id { get; set; }
     public string Name { get; set; }

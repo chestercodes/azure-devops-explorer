@@ -15,7 +15,25 @@ public class Run
 {
     public async Task WithApplicationConfig(ApplicationConfig config, CancellationToken cancellationToken)
     {
-        using ILoggerFactory loggerFactory = LoggerFactory.Create(cfg => { });
+        using ILoggerFactory loggerFactory =
+            LoggerFactory.Create(cfg =>
+            {
+                cfg.AddSimpleConsole(x =>
+                {
+                    x.SingleLine = true;
+                    x.UseUtcTimestamp = true;
+                    x.TimestampFormat = "HH:mm:ss ";
+                }
+                );
+
+                if (config.LoggingConfig != null)
+                {
+                    if (config.LoggingConfig.Verbose)
+                    {
+                        cfg.SetMinimumLevel(LogLevel.Debug);
+                    }
+                }
+            });
 
         var dataContextFactory = new DataContextFactory(config.SqlConfig.ConnectionString, config.SqlConfig.DatabaseType.Value);
 

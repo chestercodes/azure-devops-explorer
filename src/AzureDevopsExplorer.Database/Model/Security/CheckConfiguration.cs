@@ -8,6 +8,7 @@ public class CheckConfiguration
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
+    public Guid ProjectId { get; set; }
     public DateTime? LastImport { get; set; }
     public string? Settings { get; set; }
     public Guid? CreatedById { get; set; }

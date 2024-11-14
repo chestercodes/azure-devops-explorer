@@ -15,7 +15,7 @@ public class SecureFileImport
 
     public SecureFileImport(AzureDevopsProjectDataContext dataContext)
     {
-        logger = dataContext.LoggerFactory.CreateLogger(GetType());
+        logger = dataContext.LoggerFactory.Create(this);
         mapper = new Mappers();
         this.dataContext = dataContext;
     }
@@ -30,6 +30,8 @@ public class SecureFileImport
 
     public async Task ImportSecureFiles()
     {
+        logger.LogInformation($"Running secure file import");
+
         var secureFilesResult = await dataContext.Queries.DistributedTask.GetSecureFiles();
         if (secureFilesResult.IsT1)
         {

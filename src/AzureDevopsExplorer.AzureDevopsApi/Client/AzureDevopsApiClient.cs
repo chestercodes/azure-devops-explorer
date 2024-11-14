@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AzureDevopsExplorer.AzureDevopsApi.Dtos;
+using Microsoft.Extensions.Logging;
+using OneOf;
 using Polly.Wrap;
 using System.Net.Http.Json;
 using System.Text;
@@ -21,7 +23,7 @@ public class AzureDevopsApiClient
         this.azureDevopsApiAuthHeader = azureDevopsApiAuthHeader;
         ApiBase = apiBase.Value;
         this.cancellationToken = cancellationToken;
-        logger = loggerFactory.CreateLogger(GetType());
+        logger = loggerFactory.CreateLogger(GetType().Name);
         policy = AzureDevopsApiRetry.GetPolicy(logger);
     }
 
@@ -45,6 +47,72 @@ public class AzureDevopsApiClient
         {
             return new AzureDevopsApiError(ex);
         }
+    }
+
+    public async Task<AzureDevopsApiResult<OneOf<TJsonComplex, TJsonSimple>>> GetJsonComplexOrSimple<TJsonComplex, TJsonSimple>(string path)
+    {
+        try
+        {
+            var client = GetClient();
+            var url = $"{ApiBase}/{path}";
+            var data = await policy.ExecuteAsync(async () =>
+            {
+                var resp = await client.GetAsync(url, cancellationToken);
+                resp.EnsureSuccessStatusCode();
+
+                try
+                {
+                    var dataAsComplex = await resp.Content.ReadFromJsonAsync<TJsonComplex>();
+                    return OneOf<TJsonComplex, TJsonSimple>.FromT0(dataAsComplex);
+                }
+                catch
+                {
+                    var dataAsSimple = await resp.Content.ReadFromJsonAsync<TJsonSimple>();
+                    return OneOf<TJsonComplex, TJsonSimple>.FromT1(dataAsSimple);
+                }
+            });
+            return data;
+        }
+        catch (HttpRequestException ex)
+        {
+            return new AzureDevopsApiError(ex);
+        }
+    }
+
+    public async Task<AzureDevopsApiResult<List<TJson>>> GetJsonWithContinuationTokenFromHeader<TJson>(string path)
+    {
+        var toReturn = new List<TJson>();
+        var carryOn = true;
+        string continuationToken = null;
+        var client = GetClient();
+        while (carryOn)
+        {
+            var conQuery = continuationToken != null ? $"&continuationToken={continuationToken}" : "";
+            var url = $"{ApiBase}/{path}{conQuery}";
+            try
+            {
+                var resp = await client.GetAsync(url);
+                var data = await resp.Content.ReadFromJsonAsync<ListResponse<TJson>>();
+
+                if (resp.Headers.Contains("x-ms-continuationtoken"))
+                {
+                    var conTokenHeader = resp.Headers.SingleOrDefault(x => x.Key.ToLower() == "x-ms-continuationtoken");
+                    continuationToken = conTokenHeader.Value.First();
+                }
+                else
+                {
+                    carryOn = false;
+                }
+
+                toReturn.AddRange(data.value);
+            }
+            catch (HttpRequestException ex)
+            {
+                return new AzureDevopsApiError(ex);
+            }
+        }
+
+        return toReturn;
     }
 
     public async Task<AzureDevopsApiResult<string>> GetString(string path)

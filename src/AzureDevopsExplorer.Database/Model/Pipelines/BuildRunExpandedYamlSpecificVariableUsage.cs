@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
-[PrimaryKey(nameof(FileHash), nameof(PipelineEnvironmentRefId))]
-public class BuildYamlAnalysisPipelineEnvironmentUsage
+[PrimaryKey(nameof(FileHash), nameof(SpecificVariableRefId))]
+public class BuildRunExpandedYamlSpecificVariableUsage
 {
     [StringLength(32)]
     public string FileHash { get; set; }
-    public int PipelineEnvironmentRefId { get; set; }
+    public int SpecificVariableRefId { get; set; }
 }

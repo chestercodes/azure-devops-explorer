@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace AzureDevopsExplorer.Database.Model.Pipelines;
 
 [PrimaryKey(nameof(Hash))]
-public class BuildYamlAnalysisFile
+public class BuildRunExpandedYamlFile
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [StringLength(32)]
