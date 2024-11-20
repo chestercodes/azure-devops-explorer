@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using AzureDevopsExplorer.Application.Domain;
 using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Neo4j;
+using Microsoft.EntityFrameworkCore;
 
 namespace AzureDevopsExplorer.Application;
 

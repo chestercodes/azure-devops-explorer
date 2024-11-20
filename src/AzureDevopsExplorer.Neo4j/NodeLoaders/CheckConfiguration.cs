@@ -23,12 +23,12 @@ public class CheckConfiguration : ILoadNodesToNeo4J
     {
         var toReturn = new Dictionary<string, string>{
             { Props.Id, c.Id.ToString() },
-            { Props.Settings, c.Settings }
+            { Props.Settings, c.SettingsJson }
         };
 
-        if (c.Settings != "null")
+        if (c.SettingsJson != "null")
         {
-            var settings = JsonSerializer.Deserialize<CheckConfigurationSettings>(c.Settings);
+            var settings = JsonSerializer.Deserialize<CheckConfigurationSettings>(c.SettingsJson);
             var settingsProperties = settings.FlattenToDictionary("settings");
             return new Dictionary<string, string>(toReturn.ToArray().Concat(settingsProperties.ToArray()));
         }

@@ -2,7 +2,8 @@
 
 public class CheckConfiguration
 {
-    public object? settings { get; set; }
+    public Dictionary<string, object> settings { get; set; }
+    //public object? settings { get; set; }
     public Createdby? createdBy { get; set; }
     public DateTime? createdOn { get; set; }
     public Modifiedby? modifiedBy { get; set; }

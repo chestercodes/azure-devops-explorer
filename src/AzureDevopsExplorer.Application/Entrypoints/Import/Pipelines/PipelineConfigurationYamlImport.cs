@@ -55,12 +55,20 @@ public class PipelineConfigurationYamlImport
         using (var db = dataContext.DataContextFactory.Create())
         {
             var lastMonth = DateTime.UtcNow.AddMonths(-1);
+            var lastWeek = DateTime.UtcNow.AddDays(-7);
             var imports = db.PipelineConfigurationYamlTemplateImport
-                .Where(x => 
-                (x.LastImport == null || x.LastImport < lastMonth)
-                    &&
-                (x.ImportError == null)
-                    &&
+                .Where(x =>
+                (
+                    // is newly added
+                    x.LastImport == null
+                    ||
+                    // has been previously successfully added and not imported for a month
+                    (x.LastImport != null && x.LastImport < lastMonth)
+                    ||
+                    // has been previously unsuccessfully added and not retried for a week
+                    (x.ImportError != null && x.LastImport < lastWeek)
+                )
+                &&
                     db.PipelineCurrent
                         .Where(y => y.ProjectId == dataContext.Project.ProjectId)
                         .Select(y => y.Id)
@@ -79,23 +87,37 @@ public class PipelineConfigurationYamlImport
         }
     }
 
-    private async Task RunForPipeline((int PipelineId, int PipelineRevision) pipeline, DateTime lastImportTime)
+    private async Task RunForPipeline((int PipelineId, int PipelineRevision) pipelineRef, DateTime lastImportTime)
     {
-        logger.LogDebug($"Running pipeline config import " + pipeline.PipelineId);
+        logger.LogDebug($"Running pipeline config import " + pipelineRef.PipelineId);
 
         using var db = dataContext.DataContextFactory.Create();
 
         var import = await db.PipelineConfigurationYamlTemplateImport
-            .Where(x => x.PipelineId == pipeline.PipelineId && x.PipelineRevision == pipeline.PipelineRevision)
+            .Where(x => x.PipelineId == pipelineRef.PipelineId && x.PipelineRevision == pipelineRef.PipelineRevision)
             .SingleAsync();
 
-        var pipelineYaml = await db.Pipeline
-            .Where(x => x.Id == pipeline.PipelineId && x.Revision == pipeline.PipelineRevision)
+        var pipelineConfig = await db.PipelineConfigurationYamlTemplate
+            .Where(x => x.PipelineId == pipelineRef.PipelineId && x.PipelineRevision == pipelineRef.PipelineRevision)
+            .SingleOrDefaultAsync();
+
+        if (pipelineConfig == null)
+        {
+            pipelineConfig = new PipelineConfigurationYamlTemplate
+            {
+                PipelineId = pipelineRef.PipelineId,
+                PipelineRevision = pipelineRef.PipelineRevision,
+            };
+            db.PipelineConfigurationYamlTemplate.Add(pipelineConfig);
+        }
+
+        var pipeline = await db.Pipeline
+            .Where(x => x.Id == pipelineRef.PipelineId && x.Revision == pipelineRef.PipelineRevision)
             .SingleAsync();
 
         import.LastImport = lastImportTime;
 
-        var fileResult = await dataContext.Queries.Git.GetFile(pipelineYaml.ConfigurationRepositoryId.Value.ToString(), pipelineYaml.ConfigurationPath);
+        var fileResult = await dataContext.Queries.Git.GetFile(pipeline.ConfigurationRepositoryId.Value.ToString(), pipeline.ConfigurationPath);
         fileResult.Switch(fileContent =>
         {
             var parser = new ParseYamlFile();
@@ -104,9 +126,9 @@ public class PipelineConfigurationYamlImport
             {
                 if (parserResult.TemplateExtendsFromRepository)
                 {
-                    import.TemplateExtendsPath = parserResult.Info.Path;
-                    import.TemplateExtendsRepository = parserResult.Info.Repository;
-                    import.TemplateExtendsRef = parserResult.Info.Branch;
+                    pipelineConfig.TemplateExtendsPath = parserResult.Info.Path;
+                    pipelineConfig.TemplateExtendsRepository = parserResult.Info.Repository;
+                    pipelineConfig.TemplateExtendsRef = parserResult.Info.Branch;
                 }
             },
             err =>
@@ -119,7 +141,7 @@ public class PipelineConfigurationYamlImport
             {
                 if (schedulesResult.TemplateIsOnSchedule)
                 {
-                    import.TemplateSchedules = schedulesResult.Data;
+                    pipelineConfig.TemplateSchedules = schedulesResult.Data;
                 }
             },
             err =>

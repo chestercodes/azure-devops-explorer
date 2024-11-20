@@ -15,16 +15,13 @@ public class RunEvaluate
     }
     public async Task Run(ProcessConfig processConfig)
     {
-        if (processConfig.UpdateLatestPipelineAndRun)
-        {
-            var latestPipelineAndRun = new LatestPipelineAndRun(dataContext);
-            await latestPipelineAndRun.Run();
-        }
+        var latestPipelineAndRun = new LatestPipelineAndRun(dataContext);
+        await latestPipelineAndRun.Run(processConfig);
 
-        if (processConfig.DerivePermissions)
-        {
-            var deriveResourcePermissions = new DeriveResourcePermissions();
-            await deriveResourcePermissions.Run();
-        }
+        var deriveResourcePermissions = new DeriveResourcePermissions();
+        await deriveResourcePermissions.Run(processConfig);
+
+        var scanVariables = new ScanVariables(dataContext);
+        await scanVariables.Run(processConfig);
     }
 }

@@ -2,6 +2,8 @@
 
 public class ProcessConfig
 {
+    public bool ScanVariables { get; set; } = false;
+    public bool ScanVariablesForEntraApplications { get; set; } = false;
     public bool UpdateLatestPipelineAndRun { get; set; } = false;
     public bool DerivePermissions { get; set; } = false;
 

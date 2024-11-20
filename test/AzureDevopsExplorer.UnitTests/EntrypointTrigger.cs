@@ -113,8 +113,13 @@ public class EntrypointTrigger
 #endif
     public async Task RunLoadToNeo4j()
     {
+        var config = new ProcessConfig
+        {
+            UpdateLatestPipelineAndRun = true,
+        };
+
         var latestPipelineAndRun = new LatestPipelineAndRun(new DataContextFactory(SqlConnectionString, DatabaseType.Sqlite));
-        await latestPipelineAndRun.Run();
+        await latestPipelineAndRun.Run(config);
 
         string user = Environment.GetEnvironmentVariable("NEO4J_USERNAME") ?? "neo4j";
         string password = Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ?? "somepassword";
@@ -130,8 +135,12 @@ public class EntrypointTrigger
 #endif
     public async Task RunPermissionsCalculation()
     {
+        var config = new ProcessConfig
+        {
+            DerivePermissions = true,
+        };
         var entrypoint = new DeriveResourcePermissions();
-        await entrypoint.Run();
+        await entrypoint.Run(config);
     }
 
 #if DEBUG

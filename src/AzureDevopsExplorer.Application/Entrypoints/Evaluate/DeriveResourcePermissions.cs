@@ -3,6 +3,7 @@ using AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
 using AzureDevopsExplorer.Application.Entrypoints.Import;
 using System.Text.RegularExpressions;
 using AzureDevopsExplorer.Database.Model.Security;
+using AzureDevopsExplorer.Application.Configuration;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 
@@ -33,18 +34,21 @@ public class DeriveResourcePermissions
     {
         deriver = new ResourcePermissionsDeriver();
     }
-    public async Task Run()
+    public async Task Run(ProcessConfig config)
     {
-        await DeriveAgentPoolPermissions();
-        await DeriveBuildPipelinePermissions();
-        await DeriveEnvironmentPermissions();
-        await DeriveGitRepositoryPermissions();
-        await DeriveIdentityPermissions();
-        await DeriveOrganisationPermissions();
-        await DeriveProjectPermissions();
-        await DeriveSecureFilePermissions();
-        await DeriveServiceEndpointPermissions();
-        await DeriveVariableGroupPermissions();
+        if (config.DerivePermissions)
+        {
+            await DeriveAgentPoolPermissions();
+            await DeriveBuildPipelinePermissions();
+            await DeriveEnvironmentPermissions();
+            await DeriveGitRepositoryPermissions();
+            await DeriveIdentityPermissions();
+            await DeriveOrganisationPermissions();
+            await DeriveProjectPermissions();
+            await DeriveSecureFilePermissions();
+            await DeriveServiceEndpointPermissions();
+            await DeriveVariableGroupPermissions();
+        }
     }
 
     public async Task DeriveAgentPoolPermissions()

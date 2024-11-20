@@ -4,8 +4,6 @@ using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Pipelines;
 using Microsoft.Extensions.Logging;
 using OneOf;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Import.Pipelines;
 public class BuildPipelineRunExpandedYamlAnalysis
@@ -33,7 +31,7 @@ public class BuildPipelineRunExpandedYamlAnalysis
     public async Task RunAddBuildRunIdsToTable()
     {
         using var db = dataContext.DataContextFactory.Create();
-        
+
         var pipelinesIdsWhichUseYaml = db.Pipeline.Where(x => x.ConfigurationType == "yaml").Select(x => x.Id).Distinct();
         var missingInTable =
             from b in db.Build
@@ -84,7 +82,7 @@ public class BuildPipelineRunExpandedYamlAnalysis
             }
 
             var buildYaml = buildYamlLinesResult.AsT0;
-            var hash = GetMd5Hash(buildYaml);
+            var hash = Md5Hasher.Hash(buildYaml);
 
             if (db.BuildRunExpandedYamlFile.Any(x => x.Hash == hash) == false)
             {
@@ -305,19 +303,5 @@ public class BuildPipelineRunExpandedYamlAnalysis
         }
 
         await db.SaveChangesAsync();
-    }
-
-    private string GetMd5Hash(string buildYaml)
-    {
-        using (MD5 md5Hash = MD5.Create())
-        {
-            byte[] data = md5Hash.ComputeHash(Encoding.UTF8.GetBytes(buildYaml));
-            StringBuilder sBuilder = new StringBuilder();
-            for (int i = 0; i < data.Length; i++)
-            {
-                sBuilder.Append(data[i].ToString("x2"));
-            }
-            return sBuilder.ToString();
-        }
     }
 }

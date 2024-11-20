@@ -1,8 +1,10 @@
 ﻿using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.AzureDevopsApi;
 using AzureDevopsExplorer.AzureDevopsApi.Dtos;
 using AzureDevopsExplorer.Database.Mappers;
 using AzureDevopsExplorer.Database.Model.Security;
 using KellermanSoftware.CompareNetObjects;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using static AzureDevopsExplorer.AzureDevopsApi.ApprovalsAndChecks.ProjectQueries;
@@ -124,16 +126,29 @@ public class CheckConfigurationImport
     {
         var mapped = mapper.MapCheckConfiguration(check);
         mapped.ProjectId = dataContext.Project.ProjectId;
-        mapped.Settings = JsonSerializer.Serialize(check.settings);
+        mapped.SettingsJson = JsonSerializer.Serialize(check.settings);
+
+        mapped.Settings = check.settings.FlattenJsonObject().Select(x =>
+        {
+            return new CheckConfigurationSetting
+            {
+                CheckConfigurationId = check.id,
+                Name = x.Key,
+                Value = x.Value,
+            };
+        })
+            .ToList();
+
         using var db = dataContext.DataContextFactory.Create();
-        var currentCheck = db.CheckConfiguration.SingleOrDefault(x => x.Id == mapped.Id);
+        var currentCheck = db.CheckConfiguration.Include(x => x.Settings).SingleOrDefault(x => x.Id == mapped.Id);
         if (currentCheck != null)
         {
             var compareLogic = new CompareLogic(new ComparisonConfig
             {
                 MembersToIgnore = new List<string>
                 {
-                    nameof(CheckConfiguration.LastImport)
+                    nameof(CheckConfiguration.LastImport),
+                    nameof(CheckConfigurationSetting.Id)
                 },
                 MaxDifferences = 1000
             });

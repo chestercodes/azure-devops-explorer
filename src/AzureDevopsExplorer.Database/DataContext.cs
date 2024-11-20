@@ -57,6 +57,7 @@ public class DataContext : DbContext
     public DbSet<ImportError> ImportError { get; set; }
     public DbSet<ImportState> ImportState { get; set; }
     public DbSet<Project> Project { get; set; }
+    public DbSet<Triage> Triage { get; set; }
 
 
 
@@ -80,6 +81,7 @@ public class DataContext : DbContext
     public DbSet<VariableGroupChange> VariableGroupChange { get; set; }
     public DbSet<VariableGroupProjectReference> VariableGroupProjectReference { get; set; }
     public DbSet<VariableGroupVariable> VariableGroupVariable { get; set; }
+    public DbSet<VariableGroupVariableContainingEntraApplicationClientId> VariableGroupVariableContainingEntraApplicationClientId { get; set; }
 
 
 
@@ -124,6 +126,7 @@ public class DataContext : DbContext
     public DbSet<BuildRunExpandedYamlSpecificVariableUsage> BuildRunExpandedYamlSpecificVariableUsage { get; set; }
     public DbSet<BuildRunExpandedYamlVariableGroupRef> BuildRunExpandedYamlVariableGroupRef { get; set; }
     public DbSet<BuildRunExpandedYamlVariableGroupUsage> BuildRunExpandedYamlVariableGroupUsage { get; set; }
+    public DbSet<PipelineConfigurationYamlTemplate> PipelineConfigurationYamlTemplate { get; set; }
     public DbSet<PipelineConfigurationYamlTemplateImport> PipelineConfigurationYamlTemplateImport { get; set; }
     public DbSet<Pipeline> Pipeline { get; set; }
     public DbSet<PipelineCurrent> PipelineCurrent { get; set; }

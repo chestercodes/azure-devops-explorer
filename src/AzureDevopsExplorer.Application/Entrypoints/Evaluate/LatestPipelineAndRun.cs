@@ -1,4 +1,5 @@
-﻿using AzureDevopsExplorer.Database;
+﻿using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Database.Model.Pipelines;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
@@ -11,10 +12,13 @@ public class LatestPipelineAndRun
         this.dataContextFactory = dataContextFactory;
     }
 
-    public async Task Run()
+    public async Task Run(ProcessConfig config)
     {
-        await RunAddLatestPipeline();
-        await RunAddLatestPipelineDefaultRun();
+        if (config.UpdateLatestPipelineAndRun)
+        {
+            await RunAddLatestPipeline();
+            await RunAddLatestPipelineDefaultRun();
+        }
     }
 
     public async Task RunAddLatestPipeline()

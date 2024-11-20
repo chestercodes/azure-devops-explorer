@@ -10,7 +10,8 @@ public class CheckConfiguration
     public int Id { get; set; }
     public Guid ProjectId { get; set; }
     public DateTime? LastImport { get; set; }
-    public string? Settings { get; set; }
+    public string? SettingsJson { get; set; }
+    public List<CheckConfigurationSetting> Settings { get; set; } = new();
     public Guid? CreatedById { get; set; }
     public DateTime? CreatedOn { get; set; }
     public Guid? ModifiedById { get; set; }
@@ -23,4 +24,12 @@ public class CheckConfiguration
     public string ResourceType { get; set; }
     public string ResourceId { get; set; }
     public string ResourceName { get; set; }
+}
+
+public class CheckConfigurationSetting
+{
+    public long Id { get; set; }
+    public int CheckConfigurationId { get; set; }
+    public string Name { get; set; }
+    public string? Value { get; set; }
 }
