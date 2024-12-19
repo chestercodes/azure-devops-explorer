@@ -23,5 +23,8 @@ public class RunEvaluate
 
         var scanVariables = new ScanVariables(dataContext);
         await scanVariables.Run(processConfig);
+
+        var enrichPermissions = new EnrichPermissionsTable(dataContext);
+        await enrichPermissions.Run(processConfig);
     }
 }

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.11" />
+    <PackageReference Include="Radzen.Blazor" Version="5.6.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AzureDevopsExplorer.Application\AzureDevopsExplorer.Application.csproj" />
+    <ProjectReference Include="..\AzureDevopsExplorer.Database\AzureDevopsExplorer.Database.csproj" />
+  </ItemGroup>
+
+</Project>

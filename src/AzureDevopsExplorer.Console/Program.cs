@@ -82,6 +82,7 @@ app.Run(
                 ProcessConfig = new ProcessConfig
                 {
                     //DerivePermissions = true,
+                    //EnrichPermissionsTable = true,
                     //ScanVariables = true,
                     //ScanVariablesForEntraApplications = true,
                     //UpdateLatestPipelineAndRun = true,

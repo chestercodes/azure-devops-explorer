@@ -1,0 +1,119 @@
+﻿@page "/permissions-reports"
+
+@rendermode InteractiveServer
+
+@inject NavigationManager NavManager
+
+<PageTitle>Permissions reports</PageTitle>
+
+<h1>Permissions reports</h1>
+
+@using AzureDevopsExplorer.Database
+@using AzureDevopsExplorer.Database.Model.Security
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
+@using AzureDevopsExplorer.Web.Domain
+
+<InputSelect class="form-select"
+    TValue="string"
+    ValueChanged="(SelectChanged)"
+    ValueExpression="@( () => reportId )"
+    Value="reportId" >
+    @foreach (var report in AzureDevopsExplorer.Web.Domain.PermissionsReports.All)
+    {
+        <option value="@report.Id">@report.Name</option>
+    }
+</InputSelect>
+
+<h3>Description</h3>
+
+<p>@selectedDescription</p>
+
+<RadzenDataGrid
+    AllowFiltering="true"
+    AllowColumnResize="true"
+    AllowAlternatingRows="false"
+    FilterMode="FilterMode.Advanced"
+    AllowSorting="true"
+    PageSize="200"
+    AllowPaging="true"
+    PagerHorizontalAlign="HorizontalAlign.Left"
+    ShowPagingSummary="true"
+    Data="@rows"
+    ColumnWidth="300px"
+    LogicalFilterOperator="LogicalFilterOperator.Or"
+    SelectionMode="DataGridSelectionMode.Single"
+    @bind-Value=@selectedRows>
+    <Columns>
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.NamespaceName)" Title="Namespace" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ActionName)" Title="Action" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ActionDisplayName)" Title="Action display" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ActionBit)" Title="Action bit" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.AllowOrDeny)" Title="Allow or deny" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.InheritPermissions)" Title="Inherit permissions" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.Token)" Title="Token" Width="500px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityDescriptor)" Title="Identity Descriptor" Width="600px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityId)" Title="Identity Id" Width="300px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityName)" Title="Identity Name" Width="400px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityDisplayName)" Title="Identity display" Width="400px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityIsGroup)" Title="Is Group" Width="100px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.IdentityMemberCount)" Title="Group member count" Width="100px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ProjectId)" Title="Project Id" Width="300px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ProjectName)" Title="Project Name" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ResourceId)" Title="Resource Id" Width="400px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ResourceName)" Title="Resource Name" Width="400px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.ResourceType)" Title="Resource Type" Width="200px" />
+        <RadzenDataGridColumn Property="@nameof(SecurityNamespacePermissionReport.PermissionScope)" Title="Permission Scope" Width="200px" />
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    public string? reportId { get; set; }
+
+    IQueryable<SecurityNamespacePermissionReport> rows;
+    IList<SecurityNamespacePermissionReport> selectedRows;
+    DataContext? db;
+    string? selectedName;
+    string? selectedDescription;
+
+    private async Task SelectChanged(string selectValue)
+    {
+        NavManager.NavigateTo($"/permissions-reports?reportId={selectValue}", forceLoad: true);
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        
+        var permissionsReport = AzureDevopsExplorer.Web.Domain.PermissionsReports.All.First();
+        reportId = AzureDevopsExplorer.Web.Domain.PermissionsReports.All.First().Id;
+        
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("reportId", out var _reportId))
+        {
+            reportId = _reportId;
+            if (reportId != null)
+            {
+                var selectedReport =
+                    AzureDevopsExplorer.Web.Domain.PermissionsReports.All
+                        .SingleOrDefault(x => x.Id == reportId);
+                if (selectedReport != null)
+                {
+                    permissionsReport = selectedReport;
+                }
+            }
+        }
+
+        var connString = "Data Source=../AzureDevopsExplorer.Console/data/AzureDevopsExplorer.db";
+        if (db == null)
+        {
+            db = new DataContext(connString, DatabaseType.Sqlite);
+        }
+
+        rows = permissionsReport.getRows(db);
+        selectedRows = new List<SecurityNamespacePermissionReport>() { rows.FirstOrDefault() };
+        selectedDescription = permissionsReport.Description;
+
+        await base.OnInitializedAsync();
+    }
+}

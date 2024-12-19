@@ -151,6 +151,7 @@ public class DataContext : DbContext
     public DbSet<SecurityNamespace> SecurityNamespace { get; set; }
     public DbSet<SecurityNamespaceAction> SecurityNamespaceAction { get; set; }
     public DbSet<SecurityNamespacePermission> SecurityNamespacePermission { get; set; }
+    public DbSet<SecurityNamespacePermissionReport> SecurityNamespacePermissionReport { get; set; }
     public DbSet<SecurityNamespaceResourcePermission> SecurityNamespaceResourcePermission { get; set; }
     public DbSet<ServiceEndpointPipelinePermission> ServiceEndpointPipelinePermission { get; set; }
     public DbSet<VariableGroupPipelinePermission> VariableGroupPipelinePermission { get; set; }
@@ -263,6 +264,16 @@ public class DataContext : DbContext
 
         modelBuilder.Entity<SecurityNamespaceResourcePermission>()
             .Property(u => u.AllowOrDeny)
+            .AddEnumMaxLengthAndConversion();
+
+        modelBuilder.Entity<SecurityNamespacePermissionReport>()
+            .Property(u => u.AllowOrDeny)
+            .AddEnumMaxLengthAndConversion();
+        modelBuilder.Entity<SecurityNamespacePermissionReport>()
+            .Property(u => u.PermissionScope)
+            .AddEnumMaxLengthAndConversion();
+        modelBuilder.Entity<SecurityNamespacePermissionReport>()
+            .Property(u => u.ResourceType)
             .AddEnumMaxLengthAndConversion();
 
         modelBuilder.Entity<ServiceEndpointExecutionHistory>()

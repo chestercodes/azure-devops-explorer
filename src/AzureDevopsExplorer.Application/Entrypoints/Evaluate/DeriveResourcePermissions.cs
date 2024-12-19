@@ -1,9 +1,8 @@
 ﻿using AzureDevopsExplorer.Database;
 using AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
 using AzureDevopsExplorer.Application.Entrypoints.Import;
-using System.Text.RegularExpressions;
-using AzureDevopsExplorer.Database.Model.Security;
 using AzureDevopsExplorer.Application.Configuration;
+using AzureDevopsExplorer.Database.Model.Security;
 
 namespace AzureDevopsExplorer.Application.Entrypoints.Evaluate;
 
@@ -54,19 +53,9 @@ public class DeriveResourcePermissions
     public async Task DeriveAgentPoolPermissions()
     {
         var config = new AccessControlResourceConfig(
-            SecurityNamespaceIds.DistributedTask,
-            new AccessControlTokenParser(
-                    [
-                        new Regex("AgentQueues.*"),
-                        new Regex("MachineGroups.*"),
-                        new Regex("DeploymentPools.*")
-                    ],
-                    "AgentPools",
-                    null,
-                    null,
-                    $"AgentPools/{ObjectIdInt}"
-                ),
-            SecurityNamespacePermissionResourceType.AgentPool
+            AccessControlTokenParsers.AgentPool.NamespaceId.Value,
+            AccessControlTokenParsers.AgentPool.Parser,
+            Database.Model.Security.SecurityNamespacePermissionResourceType.AgentPool
         );
 
         using var db = dataContextFactory.Create();
@@ -78,15 +67,9 @@ public class DeriveResourcePermissions
     {
         using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
-        SecurityNamespaceIds.Build,
-        new AccessControlTokenParser(
-                [],
-                null,
-                $"{ProjectIdGuid}",
-                $"{ProjectIdGuid}/.*{ObjectIdInt}", // .* because folders will have their name in token
-                null
-            ),
-        SecurityNamespacePermissionResourceType.Build
+            AccessControlTokenParsers.Build.NamespaceId.Value,
+            AccessControlTokenParsers.Build.Parser,
+        Database.Model.Security.SecurityNamespacePermissionResourceType.Build
     );
         var pipelines = db.PipelineCurrent.Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId)).ToList();
         deriver.RunForResourceNamespace(db, resourceConfig, All, pipelines, []);
@@ -95,15 +78,9 @@ public class DeriveResourcePermissions
     public async Task DeriveEnvironmentPermissions()
     {
         var config = new AccessControlResourceConfig(
-            SecurityNamespaceIds.Environment,
-            new AccessControlTokenParser(
-                    [],
-                    null,
-                    $"Environments/{ProjectIdGuid}",
-                    $"Environments/{ProjectIdGuid}/{ObjectIdInt}",
-                    $"Environments/{ObjectIdInt}"
-                ),
-            SecurityNamespacePermissionResourceType.Environment
+            AccessControlTokenParsers.Environment.NamespaceId.Value,
+            AccessControlTokenParsers.Environment.Parser,
+            Database.Model.Security.SecurityNamespacePermissionResourceType.Environment
         );
         using var db = dataContextFactory.Create();
         var environments = db.PipelineEnvironment.Select(x => new ProjectScopedResource(x.Id.ToString(), x.ProjectId)).ToList();
@@ -114,17 +91,9 @@ public class DeriveResourcePermissions
     {
         using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
-        SecurityNamespaceIds.GitRepositories,
-        new AccessControlTokenParser(
-                [
-                    new Regex(".*/refs/heads/.*") // ignore branch policies
-                ],
-                null,
-                $"repoV2/{ProjectIdGuid}",
-                $"repoV2/{ProjectIdGuid}/{ObjectIdGuid}",
-                null
-            ),
-        SecurityNamespacePermissionResourceType.GitRepository
+            AccessControlTokenParsers.GitRepositories.NamespaceId.Value,
+            AccessControlTokenParsers.GitRepositories.Parser,
+        Database.Model.Security.SecurityNamespacePermissionResourceType.GitRepository
     );
 
         var projectScopedResources =
@@ -140,15 +109,9 @@ public class DeriveResourcePermissions
         // check whether the guids are 
         using var db = dataContextFactory.Create();
         var resourceConfig = new AccessControlResourceConfig(
-        SecurityNamespaceIds.Identity,
-        new AccessControlTokenParser(
-                [],
-                null,
-                $"{ProjectIdGuid}",
-                $"{ProjectIdGuid}\\\\{ObjectIdGuid}",
-                null
-            ),
-        SecurityNamespacePermissionResourceType.Identity
+            AccessControlTokenParsers.Identity.NamespaceId.Value,
+            AccessControlTokenParsers.Identity.Parser,
+        Database.Model.Security.SecurityNamespacePermissionResourceType.Identity
     );
 
         var projectScopedResources = new List<ProjectScopedResource>();
@@ -166,15 +129,9 @@ public class DeriveResourcePermissions
     public async Task DeriveOrganisationPermissions()
     {
         var collectionConfig = new AccessControlResourceConfig(
-            SecurityNamespaceIds.Collection,
-            new AccessControlTokenParser(
-                    [],
-                    "NAMESPACE$",
-                    null,
-                    null,
-                    null
-                ),
-            SecurityNamespacePermissionResourceType.Organisation
+            AccessControlTokenParsers.Collection.NamespaceId.Value,
+            AccessControlTokenParsers.Collection.Parser,
+            Database.Model.Security.SecurityNamespacePermissionResourceType.Organisation
         );
         // TODO!
     }
@@ -182,15 +139,9 @@ public class DeriveResourcePermissions
     public async Task DeriveProjectPermissions()
     {
         var resourceConfig = new AccessControlResourceConfig(
-        SecurityNamespaceIds.Project,
-        new AccessControlTokenParser(
-                [],
-                null,
-                $"\\$PROJECT:vstfs:///Classification/TeamProject/{ProjectIdGuid}",
-                null,
-                null
-            ),
-        SecurityNamespacePermissionResourceType.Project
+            AccessControlTokenParsers.Project.NamespaceId.Value,
+            AccessControlTokenParsers.Project.Parser,
+        Database.Model.Security.SecurityNamespacePermissionResourceType.Project
     );
         using var db = dataContextFactory.Create();
         deriver.RunForResourceNamespace(db, resourceConfig, All, [], []);
@@ -199,20 +150,9 @@ public class DeriveResourcePermissions
     public async Task DeriveSecureFilePermissions()
     {
         var config = new AccessControlResourceConfig(
-            SecurityNamespaceIds.Library,
-            new AccessControlTokenParser(
-                    [
-                        new Regex($"Library/{ProjectIdGuid}$"),
-                        new Regex($"Library/{ProjectIdGuid}/VariableGroup.*"),
-                        new Regex($"Library/Collection/OAuthConfiguration"),
-                        new Regex($"Library/Collection/VariableGroup.*")
-                    ],
-                    null,
-                    null,
-                    $"Library/{ProjectIdGuid}/SecureFile/{ObjectIdGuid}",
-                    null
-                ),
-            SecurityNamespacePermissionResourceType.SecureFile
+            AccessControlTokenParsers.SecureFile.NamespaceId.Value,
+            AccessControlTokenParsers.SecureFile.Parser,
+            Database.Model.Security.SecurityNamespacePermissionResourceType.SecureFile
         );
         // TODO!
         using var db = dataContextFactory.Create();
@@ -227,17 +167,9 @@ public class DeriveResourcePermissions
     public async Task DeriveServiceEndpointPermissions()
     {
         var resourceConfig = new AccessControlResourceConfig(
-        SecurityNamespaceIds.ServiceEndpoints,
-        new AccessControlTokenParser(
-            [
-
-            ],
-            null,
-            $"endpoints/{ProjectIdGuid}",
-            $"endpoints/{ProjectIdGuid}/{ObjectIdGuid}",
-            $"endpoints/Collection/{ProjectIdGuid}"
-        ),
-        SecurityNamespacePermissionResourceType.ServiceEndpoint
+            AccessControlTokenParsers.ServiceEndpoints.NamespaceId.Value,
+            AccessControlTokenParsers.ServiceEndpoints.Parser,
+        Database.Model.Security.SecurityNamespacePermissionResourceType.ServiceEndpoint
     );
 
         using var db = dataContextFactory.Create();
@@ -260,18 +192,9 @@ public class DeriveResourcePermissions
     public async Task DeriveVariableGroupPermissions()
     {
         var config = new AccessControlResourceConfig(
-            SecurityNamespaceIds.Library,
-            new AccessControlTokenParser(
-                    [
-                        new Regex($".*/SecureFile/.*"),
-                        new Regex($".*OAuth.*"),
-                    ],
-                    null,
-                    $"Library/{ProjectIdGuid}",
-                    $"Library/{ProjectIdGuid}/VariableGroup/{ObjectIdInt}",
-                    $"Library/Collection/VariableGroup/{ObjectIdInt}"
-                ),
-            SecurityNamespacePermissionResourceType.VariableGroup
+            AccessControlTokenParsers.VariableGroup.NamespaceId.Value,
+            AccessControlTokenParsers.VariableGroup.Parser,
+            Database.Model.Security.SecurityNamespacePermissionResourceType.VariableGroup
         );
 
         using var db = dataContextFactory.Create();

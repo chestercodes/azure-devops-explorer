@@ -5,5 +5,5 @@ namespace AzureDevopsExplorer.Application.Domain.AccessControlEvaluation;
 public record AccessControlResourceConfig(
             Guid NamespaceId,
             AccessControlTokenParser Parser,
-            SecurityNamespacePermissionResourceType ResourceType
+            AzureDevopsExplorer.Database.Model.Security.SecurityNamespacePermissionResourceType ResourceType
         );
